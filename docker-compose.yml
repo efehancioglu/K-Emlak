@@ -4,7 +4,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: kemlak
-      POSTGRES_PASSWORD: sifre
+      POSTGRES_PASSWORD: kemlak_sifre
       POSTGRES_DB: kemlak_db
     ports:
       - "5432:5432"
