@@ -1,0 +1,445 @@
+{
+  "trackPageview": [ "ilan_emlak_konut_kiralik_turkiye_batman_merkez", "view_ilan_detay" ],
+  " customVars ": [
+    {
+      "index": 1,
+      "name": "cat1",
+      "value": "Emlak",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "cat2",
+      "value": "Konut",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "cat3",
+      "value": "Kiralık",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "cat4",
+      "value": "Daire",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "cat5",
+      "value": "",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "loc1",
+      "value": "Türkiye",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "loc2",
+      "value": "Batman",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "loc3",
+      "value": "Merkez",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "loc4",
+      "value": "Kültür",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "loc5",
+      "value": "Kültür",
+      "Mh.",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "ilan_fiyat",
+      "value": "",
+      21.000 "TL",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "İlan",
+      "No",
+      "value": "1235206808",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "İlan",
+      "Tarihi",
+      "value": "08",
+      "Temmuz" "2026",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Emlak",
+      "Tipi",
+      "value": "Kiralık",
+      "Daire",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "m²",
+      "(Brüt)",
+      "value": "75",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "m²",
+      "(Net)",
+      "value": "60",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Oda",
+      "Sayısı",
+      "value": "1+1",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Bina",
+      "Yaşı",
+      "value": "5",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Bulunduğu",
+      "Kat",
+      "value": "3",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Kat",
+      "Sayısı",
+      "value": "5",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Isıtma",
+      "value": "Kombi",
+      "(Doğalgaz)",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Banyo",
+      "Sayısı",
+      "value": "1",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Mutfak",
+      "value": "Açık",
+      "(Amerikan)",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Balkon",
+      "value": "Var",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Asansör",
+      "value": "Var",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Otopark",
+      "value": "Açık",
+      "Otopark",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Eşyalı",
+      "value": "Evet",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Kullanım",
+      "Durumu",
+      "value": "Kiracılı",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Site",
+      "İçerisinde",
+      "value": "Hayır",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Site",
+      "Adı",
+      "value": "Belirtilmemiş",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Aidat",
+      "(TL)",
+      "value": "Belirtilmemiş",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Depozito",
+      "(TL)",
+      "value": "Belirtilmemiş",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Enerji",
+      "Kimlik" "Belgesi",
+      "value": "Belirtilmemiş",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Tapu",
+      "Durumu",
+      "value": "Kat",
+      "İrtifaklı",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Kimden",
+      "value": "Sahibinden",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Geçici",
+      "Numara" "Servisi",
+      "value": "Hayır",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "site_preference",
+      "value": "desktop",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "is_param_guvendeli",
+      "value": "0",
+      "scope": 3
+    },
+    {
+      "index": 1,
+      "name": "cd_ikinci_el_ilan_detay_ab",
+      "value": "A",
+      "scope": 3
+    },
+    {
+      "index": 1,
+      "name": "isKlipli",
+      "value": "0",
+      "scope": 3
+    },
+    {
+      "index": 1,
+      "name": "isSoruSor",
+      "value": "0",
+      "scope": 3
+    },
+    {
+      "index": 1,
+      "name": "hasSanalTur",
+      "value": "0",
+      "scope": 3
+    },
+    {
+      "index": 1,
+      "name": "fotobot",
+      "value": "0",
+      "scope": 3
+    }
+  ],
+  "trackEvent": [],
+  "dmpData": [
+    {
+      "name": "kiralik_m2_brutfiyat",
+      "value": "250-300"
+    },
+    {
+      "name": "cat1",
+      "value": "emlak"
+    },
+    {
+      "name": "cat2",
+      "value": "konut"
+    },
+    {
+      "name": "cat3",
+      "value": "kiralik"
+    },
+    {
+      "name": "cat4",
+      "value": "daire"
+    },
+    {
+      "name": "cat0",
+      "value": "emlak-konut-kiralik-daire"
+    },
+    {
+      "name": "loc1",
+      "value": "turkiye"
+    },
+    {
+      "name": "loc2",
+      "value": "batman"
+    },
+    {
+      "name": "loc3",
+      "value": "merkez"
+    },
+    {
+      "name": "loc4",
+      "value": "kultur"
+    },
+    {
+      "name": "loc5",
+      "value": "kultur-mh."
+    },
+    {
+      "name": "m2_brut",
+      "value": "75"
+    },
+    {
+      "name": "m2_net",
+      "value": "60"
+    },
+    {
+      "name": "oda_sayisi",
+      "value": "1-1"
+    },
+    {
+      "name": "bina_yasi",
+      "value": "5"
+    },
+    {
+      "name": "bulundugu_kat",
+      "value": "3"
+    },
+    {
+      "name": "kat_sayisi",
+      "value": "5"
+    },
+    {
+      "name": "isitma",
+      "value": "kombi-dogalgaz"
+    },
+    {
+      "name": "banyo_sayisi",
+      "value": "1"
+    },
+    {
+      "name": "mutfak",
+      "value": "acik-amerikan"
+    },
+    {
+      "name": "balkon",
+      "value": "var"
+    },
+    {
+      "name": "asansor",
+      "value": "var"
+    },
+    {
+      "name": "otopark",
+      "value": "acik-otopark"
+    },
+    {
+      "name": "esyali",
+      "value": "evet"
+    },
+    {
+      "name": "kullanim_durumu",
+      "value": "kiracili"
+    },
+    {
+      "name": "site_icerisinde",
+      "value": "hayir"
+    },
+    {
+      "name": "site_adi",
+      "value": "belirtilmemis"
+    },
+    {
+      "name": "enerji_kimlik_belgesi",
+      "value": "belirtilmemis"
+    },
+    {
+      "name": "tapu_durumu",
+      "value": "kat-irtifakli"
+    },
+    {
+      "name": "kimden",
+      "value": "sahibinden"
+    },
+    {
+      "name": "fiyat",
+      "value": "21000"
+    },
+    {
+      "name": "ilan_aks",
+      "value": "bakan"
+    }
+  ],
+  "transactionObject": null,
+  "transactionUserItem": null,
+  "gaParisClassified": null,
+  "trackCurrentPage": true,
+  "dc": "tuzla",
+  "homepageDesign": null,
+  "route": "classified",
+  "view": "classified",
+  "viewName": "ilan_detay",
+  "query": "",
+  "categories": [],
+  "locations": [],
+  "classified": {
+    "categories": [ "Emlak", "Konut", "Kiralık" ],
+    "locations": [ "Türkiye", "Batman", "Merkez" ],
+    "isStore": false,
+    "isGet": false,
+    "isActive": true,
+    "isUsed": null,
+    "isSafeMoney": false
+  },
+  "searchResult": null,
+  "storeSubdomain": null,
+  "successfulPaymentWithSavedCC": false,
+  "errorCode": null
+}
