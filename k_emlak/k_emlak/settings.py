@@ -35,8 +35,8 @@ DOWNLOAD_HANDLERS = {                                 # DownloaderHandler değil
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 
 
-# Disable cookies (enabled by default)
-COOKIES_ENABLED = False
+# Cloudflare cf_clearance cerezinin tutulabilmesi icin cerezler acik olmali
+COOKIES_ENABLED = True
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -99,8 +99,8 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
         "headless": False,
         "args": [
                 "--disable-blink-features=AutomationControlled",
-                "--disable-infobars"
-                "--no-sandbox"
+                "--disable-infobars",
+                "--no-sandbox",
             ],
     }
 

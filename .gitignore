@@ -431,3 +431,13 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# --- K-Emlak / scraping ozel ---
+# Playwright/patchright tarayici profili (cerez, onbellek, oturum verisi)
+pw_profil/
+# Teshis ciktilari
+teshis_ekran.png
+teshis_sayfa.html
+# Cekilen veri ciktilari
+ilanlar.csv
+ilanlar_patchright.csv
