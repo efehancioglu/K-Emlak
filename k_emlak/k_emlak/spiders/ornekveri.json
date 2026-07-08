@@ -1,6 +1,6 @@
 {
-  "trackPageview": [ "ilan_emlak_konut_kiralik_turkiye_batman_merkez", "view_ilan_detay" ],
-  " customVars ": [
+  "trackPageview": [ "ilan_emlak_konut_satilik_turkiye_istanbul_arnavutkoy", "view_ilan_detay" ],
+  "customVars": [
     {
       "index": 1,
       "name": "cat1",
@@ -16,7 +16,7 @@
     {
       "index": 1,
       "name": "cat3",
-      "value": "Kiralık",
+      "value": "Satılık",
       "scope": 2
     },
     {
@@ -40,47 +40,47 @@
     {
       "index": 1,
       "name": "loc2",
-      "value": "Batman",
+      "value": "İstanbul", // 1
       "scope": 2
     },
     {
       "index": 1,
       "name": "loc3",
-      "value": "Merkez",
+      "value": "Arnavutköy", // 2
       "scope": 2
     },
     {
       "index": 1,
       "name": "loc4",
-      "value": "Kültür",
+      "value": "Boğazköy",
       "scope": 2
     },
     {
       "index": 1,
       "name": "loc5",
-      "value": "Kültür",
-      "Mh.",
+      "value": "Boğazköy",
+      "İstiklal" "Mh.",
       "scope": 2
     },
     {
       "index": 1,
       "name": "ilan_fiyat",
       "value": "",
-      21.000 "TL",
+      "4.650.000" "TL", // 3
       "scope": 2
     },
     {
       "index": 1,
       "name": "İlan",
       "No",
-      "value": "1235206808",
+      "value": "1326912091",
       "scope": 2
     },
     {
       "index": 1,
       "name": "İlan",
       "Tarihi",
-      "value": "08",
+      "value": "07",
       "Temmuz" "2026",
       "scope": 2
     },
@@ -88,7 +88,7 @@
       "index": 1,
       "name": "Emlak",
       "Tipi",
-      "value": "Kiralık",
+      "value": "Satılık",
       "Daire",
       "scope": 2
     },
@@ -96,35 +96,37 @@
       "index": 1,
       "name": "m²",
       "(Brüt)",
-      "value": "75",
+      "value": "125", // 4
       "scope": 2
     },
     {
       "index": 1,
       "name": "m²",
       "(Net)",
-      "value": "60",
+      "value": "115", // 5
       "scope": 2
     },
     {
       "index": 1,
       "name": "Oda",
       "Sayısı",
-      "value": "1+1",
+      "value": "2+1", // 6
       "scope": 2
     },
     {
       "index": 1,
       "name": "Bina",
       "Yaşı",
-      "value": "5",
+      "value": "0",
+      "(Oturuma" "Hazır)", // 7
       "scope": 2
     },
     {
       "index": 1,
       "name": "Bulunduğu",
       "Kat",
-      "value": "3",
+      "value": "Giriş", // 8
+      "Katı",
       "scope": 2
     },
     {
@@ -145,53 +147,52 @@
       "index": 1,
       "name": "Banyo",
       "Sayısı",
-      "value": "1",
+      "value": "2", // 9
       "scope": 2
     },
     {
       "index": 1,
       "name": "Mutfak",
-      "value": "Açık",
-      "(Amerikan)",
+      "value": "Kapalı",
       "scope": 2
     },
     {
       "index": 1,
       "name": "Balkon",
-      "value": "Var",
+      "value": "Yok",
       "scope": 2
     },
     {
       "index": 1,
       "name": "Asansör",
-      "value": "Var",
+      "value": "Var", // 10
       "scope": 2
     },
     {
       "index": 1,
       "name": "Otopark",
-      "value": "Açık",
+      "value": "Açık", // 11
       "Otopark",
       "scope": 2
     },
     {
       "index": 1,
       "name": "Eşyalı",
-      "value": "Evet",
+      "value": "Hayır", // 12
       "scope": 2
     },
     {
       "index": 1,
       "name": "Kullanım",
       "Durumu",
-      "value": "Kiracılı",
+      "value": "Boş",
       "scope": 2
     },
     {
       "index": 1,
       "name": "Site",
       "İçerisinde",
-      "value": "Hayır",
+      "value": "Hayır", // 13
       "scope": 2
     },
     {
@@ -205,14 +206,14 @@
       "index": 1,
       "name": "Aidat",
       "(TL)",
-      "value": "Belirtilmemiş",
+      "value": "0",
       "scope": 2
     },
     {
       "index": 1,
-      "name": "Depozito",
-      "(TL)",
-      "value": "Belirtilmemiş",
+      "name": "Krediye",
+      "Uygun",
+      "value": "Evet",
       "scope": 2
     },
     {
@@ -227,13 +228,19 @@
       "name": "Tapu",
       "Durumu",
       "value": "Kat",
-      "İrtifaklı",
+      "Mülkiyetli",
       "scope": 2
     },
     {
       "index": 1,
       "name": "Kimden",
       "value": "Sahibinden",
+      "scope": 2
+    },
+    {
+      "index": 1,
+      "name": "Takas",
+      "value": "Hayır",
       "scope": 2
     },
     {
@@ -289,8 +296,8 @@
   "trackEvent": [],
   "dmpData": [
     {
-      "name": "kiralik_m2_brutfiyat",
-      "value": "250-300"
+      "name": "satilik_m2_brutfiyat",
+      "value": "35000-40000"
     },
     {
       "name": "cat1",
@@ -302,7 +309,7 @@
     },
     {
       "name": "cat3",
-      "value": "kiralik"
+      "value": "satilik"
     },
     {
       "name": "cat4",
@@ -310,7 +317,7 @@
     },
     {
       "name": "cat0",
-      "value": "emlak-konut-kiralik-daire"
+      "value": "emlak-konut-satilik-daire"
     },
     {
       "name": "loc1",
@@ -318,39 +325,39 @@
     },
     {
       "name": "loc2",
-      "value": "batman"
+      "value": "istanbul"
     },
     {
       "name": "loc3",
-      "value": "merkez"
+      "value": "arnavutkoy"
     },
     {
       "name": "loc4",
-      "value": "kultur"
+      "value": "bogazkoy"
     },
     {
       "name": "loc5",
-      "value": "kultur-mh."
+      "value": "bogazkoy-istiklal-mh."
     },
     {
       "name": "m2_brut",
-      "value": "75"
+      "value": "125"
     },
     {
       "name": "m2_net",
-      "value": "60"
+      "value": "115"
     },
     {
       "name": "oda_sayisi",
-      "value": "1-1"
+      "value": "2-1"
     },
     {
       "name": "bina_yasi",
-      "value": "5"
+      "value": "0-oturuma-hazir"
     },
     {
       "name": "bulundugu_kat",
-      "value": "3"
+      "value": "giris-kati"
     },
     {
       "name": "kat_sayisi",
@@ -362,15 +369,15 @@
     },
     {
       "name": "banyo_sayisi",
-      "value": "1"
+      "value": "2"
     },
     {
       "name": "mutfak",
-      "value": "acik-amerikan"
+      "value": "kapali"
     },
     {
       "name": "balkon",
-      "value": "var"
+      "value": "yok"
     },
     {
       "name": "asansor",
@@ -382,11 +389,11 @@
     },
     {
       "name": "esyali",
-      "value": "evet"
+      "value": "hayir"
     },
     {
       "name": "kullanim_durumu",
-      "value": "kiracili"
+      "value": "bos"
     },
     {
       "name": "site_icerisinde",
@@ -397,20 +404,28 @@
       "value": "belirtilmemis"
     },
     {
+      "name": "aidat_tl",
+      "value": "0"
+    },
+    {
+      "name": "krediye_uygun",
+      "value": "evet"
+    },
+    {
       "name": "enerji_kimlik_belgesi",
       "value": "belirtilmemis"
     },
     {
       "name": "tapu_durumu",
-      "value": "kat-irtifakli"
+      "value": "kat-mulkiyetli"
     },
     {
       "name": "kimden",
       "value": "sahibinden"
     },
-    {
+    {d
       "name": "fiyat",
-      "value": "21000"
+      "value": "4650000"
     },
     {
       "name": "ilan_aks",
@@ -430,8 +445,8 @@
   "categories": [],
   "locations": [],
   "classified": {
-    "categories": [ "Emlak", "Konut", "Kiralık" ],
-    "locations": [ "Türkiye", "Batman", "Merkez" ],
+    "categories": [ "Emlak", "Konut", "Satılık" ],
+    "locations": [ "Türkiye", "İstanbul", "Arnavutköy" ],
     "isStore": false,
     "isGet": false,
     "isActive": true,
