@@ -433,11 +433,16 @@ FodyWeavers.xsd
 *.msp
 
 # --- K-Emlak / scraping ozel ---
-# Playwright/patchright tarayici profili (cerez, onbellek, oturum verisi)
+# Playwright/patchright tarayici profilleri (cerez, onbellek, oturum verisi)
 pw_profil/
+he_profil/
 # Teshis ciktilari
 teshis_ekran.png
 teshis_sayfa.html
 # Cekilen veri ciktilari
 ilanlar.csv
 ilanlar_patchright.csv
+sahibinden_ilanlar.csv
+hepsiemlak_ilanlar.csv
+# Bos/gecici html dosyalari
+ilan_sayfasi.html
