@@ -441,3 +441,6 @@ teshis_sayfa.html
 # Cekilen veri ciktilari
 ilanlar.csv
 ilanlar_patchright.csv
+sahibinden_ilanlar.csv
+# Bos/gecici html dosyalari
+ilan_sayfasi.html
