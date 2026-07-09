@@ -14,9 +14,9 @@ ILAN_LINK_SEC = "a.card-link"
 SPEC_SATIR_SEC = "tr.spec-item"
 FIYAT_SEC = "p.price"
 
-# Engel gormedigimiz surece hizli gidiyoruz. Engel cikarsa bu degerleri artir.
-BEKLEME_MIN = 0.3
-BEKLEME_MAX = 1.0
+# Insan hizinda gezinme: Cloudflare checkbox'ini tetiklememek icin yeterince yavas.
+BEKLEME_MIN = 3
+BEKLEME_MAX = 8
 
 # Cloudflare "checking your browser" dogrulamasi cikarsa bu kadar bekleriz (sn)
 CF_MAX_BEKLEME = 60
@@ -249,7 +249,7 @@ class HepsiemlakSpider:
 
 
 async def main():
-    spider = HepsiemlakSpider(max_sayfa=5)
+    spider = HepsiemlakSpider(max_sayfa=30)
     toplam = await spider.crawl()
     print(f"Bu kosuda {toplam} yeni ilan eklendi -> {CIKTI_CSV}")
 
