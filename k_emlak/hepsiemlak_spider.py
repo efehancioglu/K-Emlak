@@ -19,9 +19,9 @@ BEKLEME_MIN = 3
 BEKLEME_MAX = 8
 
 ALANLAR = [
-    "ilan_no", "il_ilce", "fiyat", "brut_m2", "net_m2", "oda_sayisi",
-    "banyo_sayisi", "kat_sayisi", "bulundugu_kat", "bina_yasi", "isinma",
-    "esya_durumu", "kullanim_durumu", "tapu_durumu", "aidat", "url",
+    "ilan_no", "mahalle", "ilce", "il", "fiyat", "brut_m2", "net_m2",
+    "oda_sayisi", "banyo_sayisi", "kat_sayisi", "bulundugu_kat", "bina_yasi",
+    "isinma", "esya_durumu", "kullanim_durumu", "tapu_durumu", "aidat", "url",
 ]
 
 # spec-item tablosundaki Turkce etiket -> bizim alan adimiz
@@ -214,9 +214,22 @@ class HepsiemlakSpider:
         item["brut_m2"] = brut
         item["net_m2"] = net
         jsonld = await self._jsonld_veri(page)
-        item["il_ilce"] = jsonld["il_ilce"]
+        mahalle, ilce, il = self._konum_ayir(jsonld["il_ilce"])
+        item["mahalle"] = mahalle
+        item["ilce"] = ilce
+        item["il"] = il
         item["url"] = url
         return item
+
+    @staticmethod
+    def _konum_ayir(deger):
+        """'Kirkkonaklar, Cankaya/Ankara' -> ('Kirkkonaklar', 'Cankaya', 'Ankara')."""
+        if not deger:
+            return None, None, None
+        mahalle, _, kalan = deger.partition(",")
+        ilce, _, il = kalan.partition("/")
+        temiz = lambda s: s.strip() or None
+        return temiz(mahalle), temiz(ilce), temiz(il)
 
     @staticmethod
     def _brut_net_ayir(deger):
