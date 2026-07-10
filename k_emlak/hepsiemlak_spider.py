@@ -7,7 +7,7 @@ import random
 from patchright.async_api import async_playwright
 
 PROFIL_DIR = os.path.join(os.path.dirname(__file__), "he_profil")
-CIKTI_CSV = "hepsiemlak_ilanlar.csv"
+CIKTI_CSV = os.path.join(os.path.dirname(__file__), "hepsiemlak_ilanlar.csv")
 
 LISTE_URL = "https://www.hepsiemlak.com/satilik"
 ILAN_LINK_SEC = "a.card-link"

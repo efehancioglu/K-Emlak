@@ -446,3 +446,6 @@ sahibinden_ilanlar.csv
 hepsiemlak_ilanlar.csv
 # Bos/gecici html dosyalari
 ilan_sayfasi.html
+# Cekim log dosyalari
+cikti.log
+hata.log
