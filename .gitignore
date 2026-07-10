@@ -444,6 +444,8 @@ ilanlar.csv
 ilanlar_patchright.csv
 sahibinden_ilanlar.csv
 hepsiemlak_ilanlar.csv
+# Tarama ilerleme durumu
+.durum.json
 # Bos/gecici html dosyalari
 ilan_sayfasi.html
 # Cekim log dosyalari

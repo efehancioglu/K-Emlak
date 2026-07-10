@@ -8,6 +8,10 @@ from patchright.async_api import async_playwright
 
 PROFIL_DIR = os.path.join(os.path.dirname(__file__), "he_profil")
 CIKTI_CSV = os.path.join(os.path.dirname(__file__), "hepsiemlak_ilanlar.csv")
+DURUM_DOSYA = os.path.join(os.path.dirname(__file__), ".durum.json")
+
+# Ust uste bu kadar "tamamen bilinen" liste sayfasi gorulunce tarama durur.
+BOS_SAYFA_ESIGI = 3
 
 LISTE_URL = "https://www.hepsiemlak.com/satilik"
 ILAN_LINK_SEC = "a.card-link"
@@ -40,11 +44,15 @@ ETIKET_ESLEME = {
 
 
 class HepsiemlakSpider:
-    def __init__(self, liste_url=LISTE_URL, max_sayfa=1, csv_dosya=CIKTI_CSV):
+    def __init__(self, liste_url=LISTE_URL, max_sayfa=1, csv_dosya=CIKTI_CSV,
+                 durum_dosya=DURUM_DOSYA):
         self.liste_url = liste_url
         self.max_sayfa = max_sayfa
         self.csv_dosya = csv_dosya
+        self.durum_dosya = durum_dosya
         self.cekilen = self._mevcut_urlleri_yukle()
+        # Onceki kosuda basariyla islenmis en derin liste sayfasi.
+        self.ulasilan_sayfa = self._ulasilan_sayfa_yukle()
 
     async def crawl(self):
         toplam = 0
@@ -56,16 +64,30 @@ class HepsiemlakSpider:
             await self._kaynaklari_engelle(context)
 
             try:
+                # Yeni ilanlar genelde ilk sayfalarda cikar, o yuzden hep 1'den
+                # baslanir. Ardarda tamamen bilinen sayfa gorulunce durulur; ancak
+                # onceki kosuda ulasilan derinlige kadar erken durma devreye girmez.
+                bos_ardarda = 0
                 for sayfa in range(1, self.max_sayfa + 1):
                     linkler = await self.ilan_linkleri(page, sayfa)
                     if not linkler:
                         print(f"Sayfa {sayfa}: link yok, duruluyor.")
                         break
-                    print(f"Sayfa {sayfa}: {len(linkler)} ilan bulundu.")
 
-                    for link in linkler:
-                        if link in self.cekilen:
-                            continue
+                    yeni_linkler = [l for l in linkler if l not in self.cekilen]
+                    print(f"Sayfa {sayfa}: {len(linkler)} ilan "
+                          f"({len(yeni_linkler)} yeni).")
+
+                    if not yeni_linkler and sayfa > self.ulasilan_sayfa:
+                        bos_ardarda += 1
+                        if bos_ardarda >= BOS_SAYFA_ESIGI:
+                            print(f"  {bos_ardarda} sayfa ust uste yeni ilan yok, "
+                                  f"tarama tamamlandi.")
+                            break
+                    else:
+                        bos_ardarda = 0
+
+                    for link in yeni_linkler:
                         try:
                             item = await self.ilan_detay(page, link)
                         except Exception as e:
@@ -77,6 +99,11 @@ class HepsiemlakSpider:
                         self.cekilen.add(link)
                         toplam += 1
                         await self._insan_gecikmesi()
+
+                    # Sayfa bitti; ilerlemeyi kalici olarak isaretle.
+                    if sayfa > self.ulasilan_sayfa:
+                        self.ulasilan_sayfa = sayfa
+                    self._durum_kaydet()
             except Exception as e:
                 print(f"Kosu yarida kesildi ({type(e).__name__}). {toplam} ilan kaydedildi.")
             finally:
@@ -240,6 +267,20 @@ class HepsiemlakSpider:
             return set()
         with open(self.csv_dosya, newline="", encoding="utf-8") as f:
             return {s["url"] for s in csv.DictReader(f) if s.get("url")}
+
+    def _ulasilan_sayfa_yukle(self):
+        try:
+            with open(self.durum_dosya, encoding="utf-8") as f:
+                return int(json.load(f).get("ulasilan_sayfa", 0))
+        except (OSError, ValueError, json.JSONDecodeError):
+            return 0
+
+    def _durum_kaydet(self):
+        try:
+            with open(self.durum_dosya, "w", encoding="utf-8") as f:
+                json.dump({"ulasilan_sayfa": self.ulasilan_sayfa}, f)
+        except OSError as e:
+            print(f"  Durum kaydedilemedi ({type(e).__name__}).")
 
     def _csv_ekle(self, item):
         yeni = not os.path.exists(self.csv_dosya)
