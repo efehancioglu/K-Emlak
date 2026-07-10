@@ -22,9 +22,9 @@ BEKLEME_MAX = 8
 CF_MAX_BEKLEME = 60
 
 ALANLAR = [
-    "ilan_no", "il_ilce", "fiyat", "m2", "oda_sayisi", "banyo_sayisi",
-    "kat_sayisi", "bulundugu_kat", "bina_yasi", "isinma", "esya_durumu",
-    "kullanim_durumu", "tapu_durumu", "aidat", "url",
+    "ilan_no", "il_ilce", "fiyat", "brut_m2", "net_m2", "oda_sayisi",
+    "banyo_sayisi", "kat_sayisi", "bulundugu_kat", "bina_yasi", "isinma",
+    "esya_durumu", "kullanim_durumu", "tapu_durumu", "aidat", "url",
 ]
 
 # spec-item tablosundaki Turkce etiket -> bizim alan adimiz
@@ -186,30 +186,52 @@ class HepsiemlakSpider:
             if alan:
                 item[alan] = deger
         item["fiyat"] = fiyat
+        brut, net = self._brut_net_ayir(specler.get("Brüt / Net M2"))
+        item["brut_m2"] = brut
+        item["net_m2"] = net
         jsonld = await self._jsonld_veri(page)
         item["il_ilce"] = jsonld["il_ilce"]
-        item["m2"] = jsonld["m2"]
         item["url"] = url
         return item
 
+    @staticmethod
+    def _brut_net_ayir(deger):
+        """'83 m2 / 80 m2' -> ('83', '80'). Tek deger varsa net None kalir."""
+        if not deger:
+            return None, None
+        # Once 'm2'/'m²' birimini at, sonra rakamlari al (yoksa m2'deki 2 karisir)
+        temiz = deger.lower().replace("m2", "").replace("m²", "")
+        parcalar = temiz.split("/")
+        rakam = lambda s: "".join(ch for ch in s if ch.isdigit()) or None
+        brut = rakam(parcalar[0]) if len(parcalar) >= 1 else None
+        net = rakam(parcalar[1]) if len(parcalar) >= 2 else None
+        return brut, net
+
     async def _spec_sozluk(self, page):
-        """spec-item satirlarindan {etiket: deger} sozlugu uretir."""
+        """spec-item satirlarindan {etiket: deger} sozlugu uretir.
+
+        Deger sirasiyla .value-txt, <a> ya da <td> metninden alinir
+        (Brut/Net M2 gibi satirlarda .value-txt yok, <td> icinde iki span var).
+        """
         ciftler = await page.eval_on_selector_all(
             SPEC_SATIR_SEC,
             """els => els.map(tr => {
                 const th = tr.querySelector('th');
-                const val = tr.querySelector('.value-txt') || tr.querySelector('a');
+                const val = tr.querySelector('.value-txt')
+                          || tr.querySelector('a')
+                          || tr.querySelector('td');
                 return [
                     th ? th.innerText.trim() : '',
-                    val ? val.innerText.trim() : ''
+                    val ? val.innerText.replace(/\\s+/g,' ').trim() : ''
                 ];
             })""",
         )
         return {e: d for e, d in ciftler if e}
 
     async def _jsonld_veri(self, page):
-        """JSON-LD'den {il_ilce, m2} dondurur (RealEstateListing.about)."""
-        sonuc = {"il_ilce": None, "m2": None}
+        """JSON-LD adresinden {il_ilce} dondurur (RealEstateListing.about.address).
+        m2 spec tablosundan (brut/net ayri) alindigi icin burada gerekmez."""
+        sonuc = {"il_ilce": None}
         val = await page.eval_on_selector_all(
             "script[type='application/ld+json']", "els => els.map(e => e.textContent)"
         )
@@ -224,9 +246,7 @@ class HepsiemlakSpider:
                     continue
                 adres = about.get("address") or {}
                 sonuc["il_ilce"] = adres.get("streetAddress") or adres.get("addressLocality")
-                boyut = about.get("floorSize") or {}
-                sonuc["m2"] = boyut.get("value")
-                if sonuc["il_ilce"] or sonuc["m2"]:
+                if sonuc["il_ilce"]:
                     return sonuc
         return sonuc
 
