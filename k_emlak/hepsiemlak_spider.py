@@ -18,9 +18,6 @@ FIYAT_SEC = "p.price"
 BEKLEME_MIN = 3
 BEKLEME_MAX = 8
 
-# Cloudflare "checking your browser" dogrulamasi cikarsa bu kadar bekleriz (sn)
-CF_MAX_BEKLEME = 60
-
 ALANLAR = [
     "ilan_no", "il_ilce", "fiyat", "brut_m2", "net_m2", "oda_sayisi",
     "banyo_sayisi", "kat_sayisi", "bulundugu_kat", "bina_yasi", "isinma",
@@ -122,21 +119,48 @@ class HepsiemlakSpider:
         await context.route("**/*", yonlendir)
 
     async def _cloudflare_bekle(self, page):
-        """Cloudflare dogrulamasi cikarsa: interaktif checkbox varsa tiklar,
-        yoksa gecmesini bekler. Gecemezse CF_MAX_BEKLEME sonunda devam eder."""
-        for _ in range(CF_MAX_BEKLEME):
+        """Cloudflare dogrulamasi cikarsa once otomatik tiklamayi dener; gecmezse
+        KULLANICININ ELLE basmasini bekler (challenge kaybolana kadar sabirla).
+        """
+        if not await self._challenge_var(page):
+            return
+
+        # 1) Once otomatik koordinat tiklamasi dene (bazen gorunmez gecer)
+        print("  Cloudflare dogrulamasi cikti, otomatik deneniyor...")
+        await page.wait_for_timeout(1500)
+        await self._checkbox_tikla(page)
+        await page.wait_for_timeout(3000)
+        if not await self._challenge_var(page):
+            print("  -> otomatik gecildi.")
+            return
+
+        # 2) Gecmediyse: kullaniciya haber ver, elle basmasini bekle
+        print("\n" + "=" * 55)
+        print("  >>> ELLE DOGRULAMA GEREKIYOR <<<")
+        print("  Acik penceredeki checkbox'a BAS. Devam icin bekleniyor...")
+        print("=" * 55 + "\a")  # \a = terminal sesi
+        beklenen = 0
+        while await self._challenge_var(page):
+            await page.wait_for_timeout(2000)
+            beklenen += 2
+            if beklenen % 20 == 0:
+                print(f"  ...hala bekleniyor ({beklenen}sn). Checkbox'a bas.")
+        print("  -> Dogrulama gecildi, devam ediliyor.\n")
+
+    async def _challenge_var(self, page):
+        """Sayfada aktif Cloudflare challenge var mi?"""
+        try:
             baslik = (await page.title()).lower()
-            challenge = await page.query_selector(
-                "#challenge-running, iframe[src*='challenges.cloudflare.com'], "
-                "iframe[title*='Cloudflare'], iframe[title*='doğrulama']"
-            )
-            cf = "just a moment" in baslik or challenge is not None
-            if not cf:
-                return
-            print("  Cloudflare dogrulamasi... checkbox deneniyor.")
-            await page.wait_for_timeout(1500)  # iframe render olsun
-            await self._checkbox_tikla(page)
-            await page.wait_for_timeout(3000)  # dogrulama sonucu otursun
+        except Exception:
+            return False
+        if "just a moment" in baslik or "doğrulama" in baslik:
+            return True
+        el = await page.query_selector(
+            "#challenge-running, iframe[src*='challenges.cloudflare.com'], "
+            "iframe[title*='Cloudflare'], iframe[title*='doğrulama'], "
+            "iframe[src*='turnstile']"
+        )
+        return el is not None
 
     async def _checkbox_tikla(self, page):
         """Turnstile checkbox'ina KOORDINAT bazli tiklar. Turnstile iframe
