@@ -22,7 +22,7 @@ BEKLEME_MAX = 8
 CF_MAX_BEKLEME = 60
 
 ALANLAR = [
-    "ilan_no", "il_ilce", "fiyat", "oda_sayisi", "banyo_sayisi",
+    "ilan_no", "il_ilce", "fiyat", "m2", "oda_sayisi", "banyo_sayisi",
     "kat_sayisi", "bulundugu_kat", "bina_yasi", "isinma", "esya_durumu",
     "kullanim_durumu", "tapu_durumu", "aidat", "url",
 ]
@@ -186,7 +186,9 @@ class HepsiemlakSpider:
             if alan:
                 item[alan] = deger
         item["fiyat"] = fiyat
-        item["il_ilce"] = await self._il_ilce(page)
+        jsonld = await self._jsonld_veri(page)
+        item["il_ilce"] = jsonld["il_ilce"]
+        item["m2"] = jsonld["m2"]
         item["url"] = url
         return item
 
@@ -205,8 +207,9 @@ class HepsiemlakSpider:
         )
         return {e: d for e, d in ciftler if e}
 
-    async def _il_ilce(self, page):
-        """JSON-LD adresinden il/ilce bilgisini alir."""
+    async def _jsonld_veri(self, page):
+        """JSON-LD'den {il_ilce, m2} dondurur (RealEstateListing.about)."""
+        sonuc = {"il_ilce": None, "m2": None}
         val = await page.eval_on_selector_all(
             "script[type='application/ld+json']", "els => els.map(e => e.textContent)"
         )
@@ -216,10 +219,16 @@ class HepsiemlakSpider:
             except Exception:
                 continue
             for node in data.get("@graph", [data]):
-                adres = (node.get("about") or {}).get("address") if isinstance(node, dict) else None
-                if adres:
-                    return adres.get("streetAddress") or adres.get("addressLocality")
-        return None
+                about = node.get("about") if isinstance(node, dict) else None
+                if not about:
+                    continue
+                adres = about.get("address") or {}
+                sonuc["il_ilce"] = adres.get("streetAddress") or adres.get("addressLocality")
+                boyut = about.get("floorSize") or {}
+                sonuc["m2"] = boyut.get("value")
+                if sonuc["il_ilce"] or sonuc["m2"]:
+                    return sonuc
+        return sonuc
 
     async def _ilk_metin(self, page, secici):
         try:
