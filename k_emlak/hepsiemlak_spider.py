@@ -20,7 +20,7 @@ BEKLEME_MAX = 8
 ALANLAR = [
     "ilan_no", "mahalle", "ilce", "il", "fiyat", "brut_m2", "net_m2",
     "oda_sayisi", "banyo_sayisi", "kat_sayisi", "bulundugu_kat", "bina_yasi",
-    "isinma", "esya_durumu", "kullanim_durumu", "tapu_durumu", "aidat", "url",
+    "isinma", "esya_durumu", "kullanim_durumu", "tapu_durumu", "cephe", "aidat", "url",
 ]
 
 ETIKET_ESLEME = {
@@ -34,6 +34,7 @@ ETIKET_ESLEME = {
     "Eşya Durumu": "esya_durumu",
     "Kullanım Durumu": "kullanim_durumu",
     "Tapu Durumu": "tapu_durumu",
+    "Cephe": "cephe",
     "Aidat": "aidat",
 }
 
