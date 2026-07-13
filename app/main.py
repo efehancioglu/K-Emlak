@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from routers import listings
+from app.routers import listings
 
 app = FastAPI(title="K-Emlak API")
 
