@@ -8,7 +8,7 @@ from app.core.database import SessionLocal
 from app.models.enums import Cephe, IsitmaTipi, KullanimDurumu
 from app.models.listing import Listing
 
-CSV_PATH = Path(__file__).resolve().parent.parent / "k_emlak" / "hepsiemlak_ilanlar.csv"
+CSV_PATH = Path(__file__).resolve().parent.parent / "k_emlak" / "hepsiemlak_ilanlar_camoufox.csv"
 
 CEPHE_ALANLARI = {
     Cephe.KUZEY: "cephe_kuzey",
@@ -33,12 +33,31 @@ def aidat_cevir(deger: str) -> int | None:
     return sayiya_cevir(temiz)
 
 
-def ilk_sayi(deger: str) -> int:
+def int_veya_varsayilan(deger: str, varsayilan: int) -> int:
+    temiz = deger.strip()
+    if not temiz:
+        return varsayilan
+    return int(temiz)
+
+
+def str_veya_varsayilan(deger: str, varsayilan: str) -> str:
+    temiz = deger.strip()
+    return temiz if temiz else varsayilan
+
+
+def ilk_sayi(deger: str, varsayilan: int | None = None) -> int:
     # "24 Yaşında" -> 24 ; "4 Katlı" -> 4 ; "Sıfır Bina" -> 0
-    if "sıfır" in deger.strip().lower():
+    temiz = deger.strip()
+    if not temiz:
+        if varsayilan is not None:
+            return varsayilan
+        raise ValueError(f"boş değer: {deger!r}")
+    if "sıfır" in temiz.lower():
         return 0
-    eslesme = re.search(r"\d+", deger)
+    eslesme = re.search(r"\d+", temiz)
     if not eslesme:
+        if varsayilan is not None:
+            return varsayilan
         raise ValueError(f"sayı bulunamadı: {deger!r}")
     return int(eslesme.group())
 
@@ -81,9 +100,9 @@ def satiri_temizle(satir: dict) -> dict | None:
             "brut_metrekare": int(satir["brut_m2"]),
             "net_metrekare": int(satir["net_m2"]),
             "oda_sayisi": satir["oda_sayisi"].strip(),
-            "banyo_sayisi": int(satir["banyo_sayisi"]),
-            "kat_sayisi": ilk_sayi(satir["kat_sayisi"]),
-            "bulundugu_kat": satir["bulundugu_kat"].strip() or None,
+            "banyo_sayisi": int_veya_varsayilan(satir["banyo_sayisi"], 1),
+            "kat_sayisi": ilk_sayi(satir["kat_sayisi"], varsayilan=1),
+            "bulundugu_kat": str_veya_varsayilan(satir["bulundugu_kat"], "1. Kat"),
             "bina_yasi": ilk_sayi(satir["bina_yasi"]),
             "isitma_tipi": isitma_cevir(satir["isinma"]),
             "esyali": esyali_cevir(satir["esya_durumu"]),
