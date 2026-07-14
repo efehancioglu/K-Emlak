@@ -1,0 +1,11 @@
+# Hepsiemlak spider bagimliliklari.
+#
+# ONEMLI: playwright surumu camoufox binary'si (Firefox 135 tabanli Juggler)
+# ile uyumlu olmak zorunda. playwright 1.61 gibi yeni surumler tarayici
+# acilirken 'viewport.isMobile' alanini gonderir; camoufox binary'si bu alani
+# tanimadigi icin "Browser.setDefaultViewport ... isMobile ... not described in
+# this scheme" hatasiyla coker. 1.52.0 hem camoufox ile uyumlu hem de
+# patchright'in pyee>=13 ihtiyacini karsilar.
+playwright==1.52.0
+patchright>=1.61
+camoufox[geoip]>=0.4.11
