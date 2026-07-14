@@ -58,7 +58,7 @@ model_prediction = model.predict(x_test)
 preds = np.expm1(model_prediction)
 actual = np.expm1(y_test)
 
-print(f"Model prediction: {model_prediction}, {np.expm1(model_prediction)}")
+print(f"Model prediction: {np.expm1(model_prediction)}")
 print(f"Actual: {np.expm1(y_test)}")
 print("MAPE:", mean_absolute_percentage_error(actual, preds))
 print("MAE (TL):", mean_absolute_error(actual, preds))
