@@ -8,14 +8,24 @@ from patchright.async_api import async_playwright
 
 PROFIL_DIR = os.path.join(os.path.dirname(__file__), "he_profil")
 CIKTI_CSV = os.path.join(os.path.dirname(__file__), "hepsiemlak_ilanlar.csv")
+DURUM_DOSYA = os.path.join(os.path.dirname(__file__), ".durum.json")
+
+# Ust uste bu kadar "tamamen bilinen" liste sayfasi gorulunce tarama durur.
+BOS_SAYFA_ESIGI = 3
 
 LISTE_URL = "https://www.hepsiemlak.com/satilik"
 ILAN_LINK_SEC = "a.card-link"
 SPEC_SATIR_SEC = "tr.spec-item"
 FIYAT_SEC = "p.price"
 
-BEKLEME_MIN = 3
-BEKLEME_MAX = 8
+# Ilan detaylari arasindaki insan benzeri bekleme (saniye).
+BEKLEME_MIN = 0.8
+BEKLEME_MAX = 2
+
+# Liste sayfalari arasindaki bekleme; detaydan biraz daha uzun tutulur cunku
+# ardarda liste sayfasi cekmek Cloudflare'i en cok tetikleyen davranistir.
+SAYFA_BEKLEME_MIN = 2
+SAYFA_BEKLEME_MAX = 4
 
 ALANLAR = [
     "ilan_no", "mahalle", "ilce", "il", "fiyat", "brut_m2", "net_m2",
@@ -39,33 +49,82 @@ ETIKET_ESLEME = {
 }
 
 
+class _PatchrightBaglam:
+    """patchright ile kalici Chrome profili acan async context manager."""
+
+    async def __aenter__(self):
+        self._pw_cm = async_playwright()
+        p = await self._pw_cm.__aenter__()
+        self._context = await p.chromium.launch_persistent_context(
+            PROFIL_DIR, channel="chrome", headless=False, no_viewport=True,
+        )
+        return self._context
+
+    async def __aexit__(self, *exc):
+        try:
+            await self._context.close()
+        except Exception:
+            pass
+        await self._pw_cm.__aexit__(*exc)
+
+
 class HepsiemlakSpider:
-    def __init__(self, liste_url=LISTE_URL, max_sayfa=1, csv_dosya=CIKTI_CSV):
+    def __init__(self, liste_url=LISTE_URL, max_sayfa=1, csv_dosya=CIKTI_CSV,
+                 durum_dosya=DURUM_DOSYA, kaynak_engelle=False):
         self.liste_url = liste_url
         self.max_sayfa = max_sayfa
         self.csv_dosya = csv_dosya
+        self.durum_dosya = durum_dosya
+        # Kaynak (resim/medya) engelleme VARSAYILAN OLARAK KAPALI. Olculdu:
+        # engelleme acikken Cloudflare cok daha sik challenge cikardi (gercek
+        # tarayici alt kaynaklari bloklamaz -> bot sinyali). Kapaliyken 3 sayfa
+        # boyunca hic elle dogrulama gerekmedi. Bant genisligi onemliyse
+        # True yapilabilir (o zaman sadece resim/medya iptal edilir).
+        self.kaynak_engelle = kaynak_engelle
         self.cekilen = self._mevcut_urlleri_yukle()
+        # Onceki kosuda basariyla islenmis en derin liste sayfasi.
+        self.ulasilan_sayfa = self._ulasilan_sayfa_yukle()
+
+    def _tarayici(self):
+        """Tarayici baglamini (BrowserContext) veren async context manager.
+
+        Alt siniflar (or. Camoufox varyanti) farkli bir tarayici saglamak icin
+        bu metodu override eder. Varsayilan: patchright ile kalici Chrome profili.
+        """
+        return _PatchrightBaglam()
 
     async def crawl(self):
         toplam = 0
-        async with async_playwright() as p:
-            context = await p.chromium.launch_persistent_context(
-                PROFIL_DIR, channel="chrome", headless=False, no_viewport=True,
-            )
+        async with self._tarayici() as context:
             page = context.pages[0] if context.pages else await context.new_page()
-            await self._kaynaklari_engelle(context)
+            if self.kaynak_engelle:
+                await self._kaynaklari_engelle(context)
 
             try:
+                # Yeni ilanlar genelde ilk sayfalarda cikar, o yuzden hep 1'den
+                # baslanir. Ardarda tamamen bilinen sayfa gorulunce durulur; ancak
+                # onceki kosuda ulasilan derinlige kadar erken durma devreye girmez.
+                bos_ardarda = 0
                 for sayfa in range(1, self.max_sayfa + 1):
                     linkler = await self.ilan_linkleri(page, sayfa)
                     if not linkler:
                         print(f"Sayfa {sayfa}: link yok, duruluyor.")
                         break
-                    print(f"Sayfa {sayfa}: {len(linkler)} ilan bulundu.")
 
-                    for link in linkler:
-                        if link in self.cekilen:
-                            continue
+                    yeni_linkler = [l for l in linkler if l not in self.cekilen]
+                    print(f"Sayfa {sayfa}: {len(linkler)} ilan "
+                          f"({len(yeni_linkler)} yeni).")
+
+                    if not yeni_linkler and sayfa > self.ulasilan_sayfa:
+                        bos_ardarda += 1
+                        if bos_ardarda >= BOS_SAYFA_ESIGI:
+                            print(f"  {bos_ardarda} sayfa ust uste yeni ilan yok, "
+                                  f"tarama tamamlandi.")
+                            break
+                    else:
+                        bos_ardarda = 0
+
+                    for link in yeni_linkler:
                         try:
                             item = await self.ilan_detay(page, link)
                         except Exception as e:
@@ -77,28 +136,48 @@ class HepsiemlakSpider:
                         self.cekilen.add(link)
                         toplam += 1
                         await self._insan_gecikmesi()
+
+                    # Sayfa bitti; ilerlemeyi kalici olarak isaretle.
+                    if sayfa > self.ulasilan_sayfa:
+                        self.ulasilan_sayfa = sayfa
+                    self._durum_kaydet()
+
+                    # Bir sonraki liste sayfasina gecmeden once insan benzeri ara.
+                    if sayfa < self.max_sayfa:
+                        await self._sayfa_gecikmesi()
             except Exception as e:
                 print(f"Kosu yarida kesildi ({type(e).__name__}). {toplam} ilan kaydedildi.")
-            finally:
-                try:
-                    await context.close()
-                except Exception:
-                    pass
+            # Baglam kapatma _tarayici() context manager'inda yapilir.
         return toplam
 
     async def git_ve_bekle(self, page, url, hedef_secici):
-        await page.goto(url, wait_until="commit", timeout=60000)
+        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
         await self._cloudflare_bekle(page)
-        try:
-            await page.wait_for_selector(hedef_secici, timeout=20000)
-            return True
-        except Exception:
-            return False
+        # Challenge gecince Cloudflare sayfayi yeniden yonlendirir; hedef secici
+        # gorunmesi bu navigation'in oturmasina bagli. Cift kontrol: secici bir
+        # kez gorunmezse (arada yeni challenge cikmis olabilir) tekrar bekle.
+        for _ in range(2):
+            try:
+                await page.wait_for_selector(hedef_secici, timeout=45000)
+                return True
+            except Exception:
+                if await self._challenge_var(page):
+                    await self._cloudflare_bekle(page)
+                    continue
+                return False
+        return False
 
     async def _kaynaklari_engelle(self, context):
-        """Resim/font/medya isteklerini iptal eder; Cloudflare varliklarina dokunmaz."""
-        engelli = {"image", "media", "font"}
-        korumali = ("cloudflare.com", "hcaptcha.com")
+        """Sadece resim/medyayi iptal eder; CSS ve font yuklenir.
+
+        CSS/font'u da bloklamak Cloudflare icin guclu bir bot sinyalidir ve
+        her sayfada challenge tetikler (olculdu: engelli={image,media,font,
+        stylesheet} -> 2 sayfada 4 challenge; sadece image/media -> 0 challenge).
+        Resim/medya en buyuk bant genisligi kalemi oldugu icin onlari
+        engellemek hizi korur, bot riskini artirmaz.
+        """
+        engelli = {"image", "media"}
+        korumali = ("cloudflare.com", "hcaptcha.com", "turnstile", "challenges.cloudflare.com")
 
         async def yonlendir(route):
             if any(k in route.request.url for k in korumali):
@@ -123,7 +202,9 @@ class HepsiemlakSpider:
             await page.wait_for_timeout(2000)
             beklenen += 2
             if beklenen % 20 == 0:
-                print(f"  ...hala bekleniyor ({beklenen}sn). Checkbox'a bas.")
+                print(f"  ...hala bekleniyor ({beklenen}sn). Checkbox'a bas.\a")
+        # Clearance cerezinin profile yazilmasi ve sayfanin oturmasi icin kisa ara.
+        await page.wait_for_timeout(1500)
         print("  -> Dogrulama gecildi, devam ediliyor.\n")
 
     async def _challenge_var(self, page):
@@ -131,7 +212,9 @@ class HepsiemlakSpider:
             baslik = (await page.title()).lower()
         except Exception:
             return False
-        if "just a moment" in baslik or "doğrulama" in baslik:
+        # patchright/Chrome "Just a moment...", Camoufox/Firefox ise
+        # "Bir dakika lutfen..." baslikli challenge sayfasi gosterir.
+        if any(k in baslik for k in ("just a moment", "bir dakika", "doğrulama")):
             return True
         el = await page.query_selector(
             "#challenge-running, iframe[src*='challenges.cloudflare.com'], "
@@ -235,11 +318,28 @@ class HepsiemlakSpider:
     async def _insan_gecikmesi(self):
         await asyncio.sleep(random.uniform(BEKLEME_MIN, BEKLEME_MAX))
 
+    async def _sayfa_gecikmesi(self):
+        await asyncio.sleep(random.uniform(SAYFA_BEKLEME_MIN, SAYFA_BEKLEME_MAX))
+
     def _mevcut_urlleri_yukle(self):
         if not os.path.exists(self.csv_dosya):
             return set()
         with open(self.csv_dosya, newline="", encoding="utf-8") as f:
             return {s["url"] for s in csv.DictReader(f) if s.get("url")}
+
+    def _ulasilan_sayfa_yukle(self):
+        try:
+            with open(self.durum_dosya, encoding="utf-8") as f:
+                return int(json.load(f).get("ulasilan_sayfa", 0))
+        except (OSError, ValueError, json.JSONDecodeError):
+            return 0
+
+    def _durum_kaydet(self):
+        try:
+            with open(self.durum_dosya, "w", encoding="utf-8") as f:
+                json.dump({"ulasilan_sayfa": self.ulasilan_sayfa}, f)
+        except OSError as e:
+            print(f"  Durum kaydedilemedi ({type(e).__name__}).")
 
     def _csv_ekle(self, item):
         yeni = not os.path.exists(self.csv_dosya)
