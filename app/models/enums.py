@@ -5,6 +5,7 @@ class KullanimDurumu(str, enum.Enum):
     MULK_SAHIBI = "Mülk Sahibi"
     BOS = "Boş"
     KIRACILI = "Kiracılı"
+    BELIRTILMEMIS = "Belirtilmemiş" 
 
 
 class IsitmaTipi(str, enum.Enum):

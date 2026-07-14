@@ -1,6 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
-from app.models.enums import KullanimDurumu,Cephe,IsitmaTipi
+
+from app.models.enums import KullanimDurumu, IsitmaTipi
+
 
 class ListingBase(BaseModel):
     ilan_no: str
@@ -13,16 +16,22 @@ class ListingBase(BaseModel):
     oda_sayisi: str
     banyo_sayisi: int
     kat_sayisi: int
-    bulundugu_kat: str
+    bulundugu_kat: str | None = None
     bina_yasi: int
     isitma_tipi: IsitmaTipi
     esyali: bool
     kullanim_durumu: KullanimDurumu
-    cephe_kuzey: Cephe
+    cephe_kuzey: bool
+    cephe_guney: bool
+    cephe_dogu: bool
+    cephe_bati: bool
     aidat: int | None = None
+    kaynak_url: str
+
 
 class ListingCreate(ListingBase):
     pass
+
 
 class ListingRead(ListingBase):
     id: int
