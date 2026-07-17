@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, Integer, Boolean, DateTime, func
+from sqlalchemy import String, Integer, Float, Boolean, DateTime, func
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,7 +23,7 @@ class Listing(Base):
     brut_metrekare: Mapped[int] = mapped_column(Integer)
     net_metrekare: Mapped[int] = mapped_column(Integer)
     oda_sayisi: Mapped[str] = mapped_column(String(10))
-    banyo_sayisi: Mapped[int] = mapped_column(Integer)
+    banyo_sayisi: Mapped[float] = mapped_column(Float)
     kat_sayisi: Mapped[int] = mapped_column(Integer)
     bulundugu_kat: Mapped[str | None] = mapped_column(String(20), nullable=True)
     bina_yasi: Mapped[int] = mapped_column(Integer)

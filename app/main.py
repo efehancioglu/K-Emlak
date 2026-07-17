@@ -2,12 +2,25 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.routers import listings
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="K-Emlak API")
+from app.core.database import get_db
+from app.core.scheduler import scheduler_baslat, scheduler_durdur
+from app.routers import listings, scraper
+
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler_baslat()
+    yield
+    scheduler_durdur()
+
+
+app = FastAPI(title="K-Emlak API", lifespan=lifespan)
 
 app.include_router(listings.router)
+app.include_router(scraper.router)
 
 @app.get("/")
 def read_root():

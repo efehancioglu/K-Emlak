@@ -8,7 +8,7 @@ from app.core.database import SessionLocal
 from app.models.enums import Cephe, IsitmaTipi, KullanimDurumu
 from app.models.listing import Listing
 
-CSV_PATH = Path(__file__).resolve().parent.parent / "k_emlak" / "hepsiemlak_ilanlar_camoufox.csv"
+CSV_PATH = Path(__file__).resolve().parent.parent / "k_emlak" / "hepsiemlak_istanbul.csv"
 
 CEPHE_ALANLARI = {
     Cephe.KUZEY: "cephe_kuzey",
