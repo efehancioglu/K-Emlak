@@ -185,25 +185,14 @@ class HepsiemlakIstanbulSpider:
         await context.route("**/*", yonlendir)
 
     async def _cloudflare_bekle(self, page):
-        """Cloudflare dogrulamasi cikarsa once otomatik cozmeyi dener.
+        """Cloudflare dogrulamasi cikarsa kullanicinin elle basmasini bekler.
 
-        camoufox_captcha interstitial challenge'daki checkbox'a kendisi basar.
-        Basarisiz olursa (veya hata verirse) eski davranisa dusulur: kullanici
-        elle basana kadar beklenir.
+        Otomatik cozme denendi ve calismiyor: Cloudflare challenge iframe'inin
+        icerigi cross-origin izole (frame HTML'i bos, 0 eleman okunuyor), yani
+        checkbox'a programatik olarak erisilemiyor. camoufox_captcha da bu
+        yuzden "Cloudflare iframes not found" verip basarisiz oluyor.
         """
         if not await self._challenge_var(page):
-            return
-
-        try:
-            cozuldu = await solve_captcha(
-                page, captcha_type="cloudflare", challenge_type="interstitial",
-            )
-        except Exception as e:
-            print(f"  Otomatik cozum hata verdi ({type(e).__name__}), elle gecise dusuluyor.")
-            cozuldu = False
-
-        if cozuldu and not await self._challenge_var(page):
-            print("  -> Challenge otomatik cozuldu, devam ediliyor.\n")
             return
 
         print("\n" + "=" * 55)
