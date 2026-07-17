@@ -1,31 +1,52 @@
+"""Hepsiemlak Istanbul spider'i - bagimsiz Camoufox surumu.
+
+Bu dosya patchright'tan BAGIMSIZDIR; hepsiemlak_spider.py'yi import etmez.
+Tum parsing, CSV yazma, durum yonetimi ve Cloudflare bekleme mantigi burada
+kendi kendine yeter. Sadece Camoufox (Firefox tabanli) tarayici kullanir.
+
+Varsayilan olarak SADECE Istanbul ilanlarini ceker
+(https://www.hepsiemlak.com/istanbul-satilik).
+
+NOT: Cloudflare korumasini otomatik cozmez. Challenge cikarsa acik pencerede
+elle gecilir (_cloudflare_bekle). Kaynak (resim/medya) engelleme varsayilan
+KAPALI cunku engellemek Cloudflare icin bot sinyali olup challenge'i artiriyor.
+
+Kurulum (bir kez):
+    pip install camoufox[geoip]
+    python -m camoufox fetch
+"""
+
 import asyncio
 import csv
 import json
 import os
 import random
 
-from patchright.async_api import async_playwright
+from camoufox.async_api import AsyncCamoufox
 
-PROFIL_DIR = os.path.join(os.path.dirname(__file__), "he_profil")
-CIKTI_CSV = os.path.join(os.path.dirname(__file__), "hepsiemlak_ilanlar.csv")
-DURUM_DOSYA = os.path.join(os.path.dirname(__file__), ".durum.json")
+# --- Cikti/profil dosyalari (Istanbul'a ozel; genel surumle karismaz) ---
+PROFIL_DIR = os.path.join(os.path.dirname(__file__), "he_camoufox_profil")
+CIKTI_CSV = os.path.join(os.path.dirname(__file__), "hepsiemlak_istanbul.csv")
+DURUM_DOSYA = os.path.join(os.path.dirname(__file__), ".durum_istanbul.json")
 
 # Ust uste bu kadar "tamamen bilinen" liste sayfasi gorulunce tarama durur.
 BOS_SAYFA_ESIGI = 3
 
-LISTE_URL = "https://www.hepsiemlak.com/satilik"
+# Sadece Istanbul.
+LISTE_URL = "https://www.hepsiemlak.com/istanbul-satilik"
 ILAN_LINK_SEC = "a.card-link"
 SPEC_SATIR_SEC = "tr.spec-item"
 FIYAT_SEC = "p.price"
 
 # Ilan detaylari arasindaki insan benzeri bekleme (saniye).
-BEKLEME_MIN = 0.8
-BEKLEME_MAX = 2
+# NOT: onceki degerlerden (0.8-2) cok ufak yukseltildi -> daha az bot sinyali.
+BEKLEME_MIN = 1.2
+BEKLEME_MAX = 2.8
 
-# Liste sayfalari arasindaki bekleme; detaydan biraz daha uzun tutulur cunku
+# Liste sayfalari arasindaki bekleme; detaydan biraz uzun tutulur cunku
 # ardarda liste sayfasi cekmek Cloudflare'i en cok tetikleyen davranistir.
-SAYFA_BEKLEME_MIN = 2
-SAYFA_BEKLEME_MAX = 4
+SAYFA_BEKLEME_MIN = 3
+SAYFA_BEKLEME_MAX = 5
 
 ALANLAR = [
     "ilan_no", "mahalle", "ilce", "il", "fiyat", "brut_m2", "net_m2",
@@ -49,49 +70,32 @@ ETIKET_ESLEME = {
 }
 
 
-class _PatchrightBaglam:
-    """patchright ile kalici Chrome profili acan async context manager."""
-
-    async def __aenter__(self):
-        self._pw_cm = async_playwright()
-        p = await self._pw_cm.__aenter__()
-        self._context = await p.chromium.launch_persistent_context(
-            PROFIL_DIR, channel="chrome", headless=False, no_viewport=True,
-        )
-        return self._context
-
-    async def __aexit__(self, *exc):
-        try:
-            await self._context.close()
-        except Exception:
-            pass
-        await self._pw_cm.__aexit__(*exc)
-
-
-class HepsiemlakSpider:
+class HepsiemlakIstanbulSpider:
     def __init__(self, liste_url=LISTE_URL, max_sayfa=1, csv_dosya=CIKTI_CSV,
-                 durum_dosya=DURUM_DOSYA, kaynak_engelle=False):
+                 durum_dosya=DURUM_DOSYA, kaynak_engelle=False, erken_dur=False):
         self.liste_url = liste_url
         self.max_sayfa = max_sayfa
         self.csv_dosya = csv_dosya
         self.durum_dosya = durum_dosya
-        # Kaynak (resim/medya) engelleme VARSAYILAN OLARAK KAPALI. Olculdu:
-        # engelleme acikken Cloudflare cok daha sik challenge cikardi (gercek
-        # tarayici alt kaynaklari bloklamaz -> bot sinyali). Kapaliyken 3 sayfa
-        # boyunca hic elle dogrulama gerekmedi. Bant genisligi onemliyse
-        # True yapilabilir (o zaman sadece resim/medya iptal edilir).
+        # Kaynak (resim/medya) engelleme VARSAYILAN KAPALI: engelleme acikken
+        # Cloudflare cok daha sik challenge cikardi (gercek tarayici alt
+        # kaynaklari bloklamaz -> bot sinyali). True yapilirsa sadece
+        # resim/medya iptal edilir (bant genisligi tasarrufu).
         self.kaynak_engelle = kaynak_engelle
+        # erken_dur=False (VARSAYILAN): max_sayfa'ya kadar TUM sayfalar gezilir,
+        # her sayfada yalnizca CSV'de olmayan yeni ilanlar eklenir. Ilk sayfalar
+        # zaten cekilmis ilanlarla dolu olsa bile derindeki yeni ilanlar
+        # kacirilmaz. True yapilirsa ard arda bos sayfada erken durur (hizli
+        # gunluk tarama icin).
+        self.erken_dur = erken_dur
+        # Mevcut CSV'deki URL'ler "cekilmis" sayilir ve atlanir.
         self.cekilen = self._mevcut_urlleri_yukle()
-        # Onceki kosuda basariyla islenmis en derin liste sayfasi.
         self.ulasilan_sayfa = self._ulasilan_sayfa_yukle()
 
+    # ------------------------------------------------------------------ tarayici
     def _tarayici(self):
-        """Tarayici baglamini (BrowserContext) veren async context manager.
-
-        Alt siniflar (or. Camoufox varyanti) farkli bir tarayici saglamak icin
-        bu metodu override eder. Varsayilan: patchright ile kalici Chrome profili.
-        """
-        return _PatchrightBaglam()
+        """Camoufox ile kalici profil acan async context manager dondurur."""
+        return _CamoufoxBaglam()
 
     async def crawl(self):
         toplam = 0
@@ -101,9 +105,6 @@ class HepsiemlakSpider:
                 await self._kaynaklari_engelle(context)
 
             try:
-                # Yeni ilanlar genelde ilk sayfalarda cikar, o yuzden hep 1'den
-                # baslanir. Ardarda tamamen bilinen sayfa gorulunce durulur; ancak
-                # onceki kosuda ulasilan derinlige kadar erken durma devreye girmez.
                 bos_ardarda = 0
                 for sayfa in range(1, self.max_sayfa + 1):
                     linkler = await self.ilan_linkleri(page, sayfa)
@@ -115,7 +116,10 @@ class HepsiemlakSpider:
                     print(f"Sayfa {sayfa}: {len(linkler)} ilan "
                           f"({len(yeni_linkler)} yeni).")
 
-                    if not yeni_linkler and sayfa > self.ulasilan_sayfa:
+                    # erken_dur kapaliyken (varsayilan) bos sayfalar taramayi
+                    # durdurmaz; sadece atlanir, sonraki sayfalarda yeni ilan
+                    # aranmaya devam edilir.
+                    if self.erken_dur and not yeni_linkler and sayfa > self.ulasilan_sayfa:
                         bos_ardarda += 1
                         if bos_ardarda >= BOS_SAYFA_ESIGI:
                             print(f"  {bos_ardarda} sayfa ust uste yeni ilan yok, "
@@ -137,19 +141,17 @@ class HepsiemlakSpider:
                         toplam += 1
                         await self._insan_gecikmesi()
 
-                    # Sayfa bitti; ilerlemeyi kalici olarak isaretle.
                     if sayfa > self.ulasilan_sayfa:
                         self.ulasilan_sayfa = sayfa
                     self._durum_kaydet()
 
-                    # Bir sonraki liste sayfasina gecmeden once insan benzeri ara.
                     if sayfa < self.max_sayfa:
                         await self._sayfa_gecikmesi()
             except Exception as e:
                 print(f"Kosu yarida kesildi ({type(e).__name__}). {toplam} ilan kaydedildi.")
-            # Baglam kapatma _tarayici() context manager'inda yapilir.
         return toplam
 
+    # ------------------------------------------------------------------ gezinme
     async def git_ve_bekle(self, page, url, hedef_secici):
         await page.goto(url, wait_until="domcontentloaded", timeout=60000)
         await self._cloudflare_bekle(page)
@@ -168,14 +170,7 @@ class HepsiemlakSpider:
         return False
 
     async def _kaynaklari_engelle(self, context):
-        """Sadece resim/medyayi iptal eder; CSS ve font yuklenir.
-
-        CSS/font'u da bloklamak Cloudflare icin guclu bir bot sinyalidir ve
-        her sayfada challenge tetikler (olculdu: engelli={image,media,font,
-        stylesheet} -> 2 sayfada 4 challenge; sadece image/media -> 0 challenge).
-        Resim/medya en buyuk bant genisligi kalemi oldugu icin onlari
-        engellemek hizi korur, bot riskini artirmaz.
-        """
+        """Sadece resim/medyayi iptal eder; CSS ve font yuklenir."""
         engelli = {"image", "media"}
         korumali = ("cloudflare.com", "hcaptcha.com", "turnstile", "challenges.cloudflare.com")
 
@@ -190,9 +185,27 @@ class HepsiemlakSpider:
         await context.route("**/*", yonlendir)
 
     async def _cloudflare_bekle(self, page):
-        """Cloudflare dogrulamasi cikarsa kullanicinin elle basmasini bekler."""
+        """Cloudflare dogrulamasi cikarsa once otomatik cozmeyi dener.
+
+        camoufox_captcha interstitial challenge'daki checkbox'a kendisi basar.
+        Basarisiz olursa (veya hata verirse) eski davranisa dusulur: kullanici
+        elle basana kadar beklenir.
+        """
         if not await self._challenge_var(page):
             return
+
+        try:
+            cozuldu = await solve_captcha(
+                page, captcha_type="cloudflare", challenge_type="interstitial",
+            )
+        except Exception as e:
+            print(f"  Otomatik cozum hata verdi ({type(e).__name__}), elle gecise dusuluyor.")
+            cozuldu = False
+
+        if cozuldu and not await self._challenge_var(page):
+            print("  -> Challenge otomatik cozuldu, devam ediliyor.\n")
+            return
+
         print("\n" + "=" * 55)
         print("  >>> ELLE DOGRULAMA GEREKIYOR <<<")
         print("  Acik penceredeki checkbox'a BAS. Devam icin bekleniyor...")
@@ -203,7 +216,6 @@ class HepsiemlakSpider:
             beklenen += 2
             if beklenen % 20 == 0:
                 print(f"  ...hala bekleniyor ({beklenen}sn). Checkbox'a bas.\a")
-        # Clearance cerezinin profile yazilmasi ve sayfanin oturmasi icin kisa ara.
         await page.wait_for_timeout(1500)
         print("  -> Dogrulama gecildi, devam ediliyor.\n")
 
@@ -212,8 +224,7 @@ class HepsiemlakSpider:
             baslik = (await page.title()).lower()
         except Exception:
             return False
-        # patchright/Chrome "Just a moment...", Camoufox/Firefox ise
-        # "Bir dakika lutfen..." baslikli challenge sayfasi gosterir.
+        # Camoufox/Firefox "Bir dakika lutfen...", Chrome "Just a moment..."
         if any(k in baslik for k in ("just a moment", "bir dakika", "doğrulama")):
             return True
         el = await page.query_selector(
@@ -222,6 +233,7 @@ class HepsiemlakSpider:
         )
         return el is not None
 
+    # ------------------------------------------------------------------ parsing
     async def ilan_linkleri(self, page, sayfa):
         url = self.liste_url if sayfa == 1 else f"{self.liste_url}?page={sayfa}"
         if not await self.git_ve_bekle(page, url, ILAN_LINK_SEC):
@@ -315,6 +327,7 @@ class HepsiemlakSpider:
         except Exception:
             return None
 
+    # ------------------------------------------------------------------ gecikme/IO
     async def _insan_gecikmesi(self):
         await asyncio.sleep(random.uniform(BEKLEME_MIN, BEKLEME_MAX))
 
@@ -350,8 +363,34 @@ class HepsiemlakSpider:
             w.writerow(item)
 
 
+class _CamoufoxBaglam:
+    """Camoufox ile kalici profil acan async context manager.
+
+    persistent_context=True verildiginde AsyncCamoufox dogrudan bir
+    BrowserContext dondurur; boylece clearance cerezi profilde saklanir.
+    """
+
+    async def __aenter__(self):
+        os.makedirs(PROFIL_DIR, exist_ok=True)
+        self._cm = AsyncCamoufox(
+            headless=False,
+            persistent_context=True,
+            user_data_dir=PROFIL_DIR,
+            # Turkiye cikisli gorunum; GeoIP ile tutarli fingerprint uretir.
+            geoip=True,
+            locale="tr-TR",
+            # Insan benzeri kucuk gecikmeler ve humanize hareketler.
+            humanize=True,
+        )
+        self._context = await self._cm.__aenter__()
+        return self._context
+
+    async def __aexit__(self, *exc):
+        await self._cm.__aexit__(*exc)
+
+
 async def main():
-    spider = HepsiemlakSpider(max_sayfa=30)
+    spider = HepsiemlakIstanbulSpider(max_sayfa=300)
     toplam = await spider.crawl()
     print(f"Bu kosuda {toplam} yeni ilan eklendi -> {CIKTI_CSV}")
 
