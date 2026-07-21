@@ -11,10 +11,10 @@ def scheduler_baslat() -> None:
         scraping_ve_aktarim_calistir,
         
         #gercekte bu caliscak 
-        #trigger=CronTrigger(hour=3, minute=0),
+        trigger=CronTrigger(hour=3, minute=0),
 
         #test icin
-        trigger=CronTrigger(hour=12, minute=1),
+        #trigger=CronTrigger(hour=12, minute=1),
 
         id="gecelik_scrapping",
         replace_existing=True,
