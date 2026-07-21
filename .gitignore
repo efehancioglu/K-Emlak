@@ -453,3 +453,6 @@ cikti.log
 hata.log
 /k_emlak/he_camoufox_profil
 catboost_info/
+# Claude Code (yerel gelistirme araclari - repoda tutulmaz)
+.claude/
+CLAUDE.md
