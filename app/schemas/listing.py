@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import KullanimDurumu, IsitmaTipi
+from app.schemas.valuation import IlanDegerlendirme
 
 
 class ListingBase(BaseModel):
@@ -38,3 +39,9 @@ class ListingRead(ListingBase):
     olusturulma_tarihi: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ListingDetail(ListingRead):
+    """Ilan detayi: ilanin bilgileri + piyasaya gore fiyat degerlendirmesi."""
+
+    fiyat_degerlendirmesi: IlanDegerlendirme

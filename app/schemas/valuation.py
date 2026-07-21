@@ -52,6 +52,17 @@ class ValuationResponse(BaseModel):
     yorum: FiyatYorumu | None = None
 
 
+class IlanDegerlendirme(BaseModel):
+    """Bir ilanin, ozelliklerine gore tahmin edilen piyasa degeriyle
+    karsilastirilmasi: ilandaki fiyat piyasaya gore pahali/normal/uygun mi."""
+
+    tahmini_fiyat: int
+    fiyat_araligi: FiyatAraligi
+    durum: str          # "uygun" | "normal" | "pahali"
+    mesaj: str
+    fark_yuzdesi: float  # ilan fiyatinin tahmine gore yuzde farki (+ pahali)
+
+
 class ValuationRead(BaseModel):
     """Kayit altina alinmis bir gecmis degerleme."""
 

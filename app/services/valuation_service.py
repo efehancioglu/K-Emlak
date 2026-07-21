@@ -8,12 +8,23 @@ uygun yorumunu ekler.
 
 from k_emlak.catboost.tahmin_egit import secenekler, tahmin_et
 
+from app.models.listing import Listing
 from app.schemas.valuation import (
     FiyatAraligi,
     FiyatYorumu,
+    IlanDegerlendirme,
     ValuationRequest,
     ValuationResponse,
 )
+
+# Listing'in 4 ayri cephe boolean'ini, modelin bekledigi virgulle birlesik
+# yon dizisine ("Kuzey, Guney, ...") cevirmek icin sira.
+_CEPHE_YONLERI = [
+    ("cephe_kuzey", "Kuzey"),
+    ("cephe_guney", "Güney"),
+    ("cephe_dogu", "Doğu"),
+    ("cephe_bati", "Batı"),
+]
 
 # Modelin ortalama sapmasini temsil eden hata payi. Tahmini bir alt-ust
 # araligi ("su fiyatla su fiyat arasinda") uretmek ve kullaniciya tahminin
@@ -85,6 +96,45 @@ def degerle(istek: ValuationRequest) -> ValuationResponse:
         birim_m2_fiyat=birim_m2,
         tahmin_hata_payi=TAHMIN_HATA_PAYI,
         yorum=yorum,
+    )
+
+
+def ilani_degerlendir(ilan: Listing) -> IlanDegerlendirme:
+    """Bir ilanin ozelliklerini modele verip tahmini piyasa degerini uretir
+    ve ilandaki fiyati bununla karsilastirir (piyasaya gore pahali mi?)."""
+    cephe = ", ".join(
+        ad for alan, ad in _CEPHE_YONLERI if getattr(ilan, alan)
+    )
+    esya_durumu = "Eşyalı" if ilan.esyali else "Eşyalı Değil"
+
+    tahmin = tahmin_et(
+        ilce=ilan.ilce,
+        mahalle=ilan.mahalle,
+        brut_m2=ilan.brut_metrekare,
+        net_m2=ilan.net_metrekare,
+        oda_sayisi=ilan.oda_sayisi,
+        banyo_sayisi=int(ilan.banyo_sayisi),
+        bina_yasi=ilan.bina_yasi,
+        bulundugu_kat=ilan.bulundugu_kat,
+        kat_sayisi=ilan.kat_sayisi,
+        isinma=ilan.isitma_tipi.value,
+        cephe=cephe or None,
+        esya_durumu=esya_durumu,
+        aidat=ilan.aidat or 0,
+    )
+
+    araligi = FiyatAraligi(
+        alt=int(tahmin * (1 - TAHMIN_HATA_PAYI)),
+        ust=int(tahmin * (1 + TAHMIN_HATA_PAYI)),
+    )
+    yorum = _fiyat_yorumla(tahmin, ilan.fiyat)
+
+    return IlanDegerlendirme(
+        tahmini_fiyat=tahmin,
+        fiyat_araligi=araligi,
+        durum=yorum.durum,
+        mesaj=yorum.mesaj,
+        fark_yuzdesi=yorum.fark_yuzdesi,
     )
 
 
