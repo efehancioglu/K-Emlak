@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import KullanimDurumu, IsitmaTipi
-from app.schemas.valuation import IlanDegerlendirme
+from app.schemas.valuation import IlanDegerlendirme, PiyasaOzet
 
 
 class ListingBase(BaseModel):
@@ -45,3 +45,19 @@ class ListingDetail(ListingRead):
     """Ilan detayi: ilanin bilgileri + piyasaya gore fiyat degerlendirmesi."""
 
     fiyat_degerlendirmesi: IlanDegerlendirme
+
+
+class ListingListItem(ListingRead):
+    """Liste kartinda gosterilen ilan + hafif piyasa onizlemesi (durum/simge
+    icin). Detaydaki tam degerlendirmenin kucuk halidir."""
+
+    piyasa: PiyasaOzet | None = None
+
+
+class ListingPage(BaseModel):
+    """Sayfalanmis ilan listesi. toplam = filtreye uyan tum ilan sayisi."""
+
+    toplam: int
+    skip: int
+    limit: int
+    items: list[ListingListItem]

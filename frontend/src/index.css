@@ -294,14 +294,20 @@ h2 { font-size: 1.3rem; font-weight: 750; }
   gap: 16px;
 }
 .listing-card {
+  position: relative;
   display: block;
   background: var(--surface);
   border: 1px solid var(--line);
+  border-left-width: 4px;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 18px 20px;
   transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
 }
+/* Piyasa durumuna gore sol kenar vurgusu (onizleme) */
+.listing-card.durum-uygun { border-left-color: var(--uygun); }
+.listing-card.durum-normal { border-left-color: var(--normal); }
+.listing-card.durum-pahali { border-left-color: var(--pahali); }
 .listing-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lift);
@@ -329,6 +335,37 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 }
 
 .list-info { margin-bottom: 14px; font-size: 0.9rem; color: var(--ink-faint); }
+.list-info strong { color: var(--ink); }
+
+/* Kart uzerindeki piyasa onizleme rozeti */
+.piyasa-rozet {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.piyasa-rozet .simge { font-size: 0.78rem; line-height: 1; }
+.piyasa-rozet.uygun { color: var(--uygun); background: var(--uygun-bg); }
+.piyasa-rozet.normal { color: var(--normal); background: var(--normal-bg); }
+.piyasa-rozet.pahali { color: var(--pahali); background: var(--pahali-bg); }
+.listing-card .fiyat { padding-right: 96px; }
+
+/* Sayfalama */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+.pagination .btn:disabled { opacity: 0.45; cursor: default; }
+.sayfa-bilgi { font-size: 0.9rem; font-weight: 600; color: var(--ink-soft); }
 
 /* ---- Ilan detay ---- */
 .detail-grid {

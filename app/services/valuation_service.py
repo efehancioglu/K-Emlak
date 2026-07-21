@@ -13,6 +13,7 @@ from app.schemas.valuation import (
     FiyatAraligi,
     FiyatYorumu,
     IlanDegerlendirme,
+    PiyasaOzet,
     ValuationRequest,
     ValuationResponse,
 )
@@ -136,6 +137,27 @@ def ilani_degerlendir(ilan: Listing) -> IlanDegerlendirme:
         mesaj=yorum.mesaj,
         fark_yuzdesi=yorum.fark_yuzdesi,
     )
+
+
+def ilanlari_piyasa_ozeti(ilanlar: list[Listing]) -> list[PiyasaOzet | None]:
+    """Bir sayfadaki ilanlarin her biri icin liste kartinda gosterilecek
+    hafif piyasa onizlemesi (durum + tahmini fiyat + fark). Ilanlarla ayni
+    sirada doner; bir ilan degerlendirilemezse yerine None konur (o kartta
+    onizleme gosterilmez, sayfa yine de yuklenir)."""
+    ozetler: list[PiyasaOzet | None] = []
+    for ilan in ilanlar:
+        try:
+            d = ilani_degerlendir(ilan)
+            ozetler.append(
+                PiyasaOzet(
+                    durum=d.durum,
+                    tahmini_fiyat=d.tahmini_fiyat,
+                    fark_yuzdesi=d.fark_yuzdesi,
+                )
+            )
+        except Exception:
+            ozetler.append(None)
+    return ozetler
 
 
 def secenekleri_getir() -> dict:
