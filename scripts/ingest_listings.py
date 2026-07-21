@@ -10,6 +10,17 @@ from app.models.listing import Listing
 
 CSV_PATH = Path(__file__).resolve().parent.parent / "k_emlak" / "hepsiemlak_istanbul.csv"
 
+# Proje ilk etapta yalnizca Istanbul ilanlariyla calisir. Kaynak veride
+# (eski Turkiye geneli scrape'lerden) Istanbul disi satirlar bulunabilir;
+# bunlar veritabanina alinmaz.
+HEDEF_IL = "istanbul"
+
+
+def il_istanbul_mu(il: str) -> bool:
+    # "Istanbul", "istanbul", "ISTANBUL" -> True. Turkce buyuk I'nin
+    # kucultulmesinde olusan birlesik nokta (U+0307) temizlenir.
+    return il.strip().lower().replace("̇", "") == HEDEF_IL
+
 CEPHE_ALANLARI = {
     Cephe.KUZEY: "cephe_kuzey",
     Cephe.GUNEY: "cephe_guney",
@@ -123,7 +134,7 @@ def calistir() -> None:
         return
 
     db = SessionLocal()
-    eklenen = zaten_var = atlanan = 0
+    eklenen = zaten_var = atlanan = istanbul_disi = 0
 
     try:
         with open(CSV_PATH, newline="", encoding="utf-8") as dosya:
@@ -131,6 +142,10 @@ def calistir() -> None:
                 temiz = satiri_temizle(satir)
                 if temiz is None:
                     atlanan += 1
+                    continue
+
+                if not il_istanbul_mu(temiz["il"]):
+                    istanbul_disi += 1
                     continue
 
                 mevcut = db.execute(
@@ -147,7 +162,10 @@ def calistir() -> None:
     finally:
         db.close()
 
-    print(f"Eklenen: {eklenen}, zaten vardı: {zaten_var}, atlanan (hatalı): {atlanan}")
+    print(
+        f"Eklenen: {eklenen}, zaten vardı: {zaten_var}, "
+        f"atlanan (hatalı): {atlanan}, İstanbul dışı: {istanbul_disi}"
+    )
 
 
 if __name__ == "__main__":
