@@ -13,6 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from app.core.config import settings
 from app.core.database import Base
 from app.models.listing import Listing # noqa: F401
+from app.models.valuation import Valuation # noqa: F401
 
 
 # this is the Alembic Config object, which provides

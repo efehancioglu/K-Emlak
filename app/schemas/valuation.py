@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ValuationRequest(BaseModel):
@@ -48,3 +50,22 @@ class ValuationResponse(BaseModel):
     # hata payinin tersi mantigiyla bilgilendirme amacli).
     tahmin_hata_payi: float
     yorum: FiyatYorumu | None = None
+
+
+class ValuationRead(BaseModel):
+    """Kayit altina alinmis bir gecmis degerleme."""
+
+    id: int
+    ilce: str
+    mahalle: str | None
+    brut_m2: int
+    oda_sayisi: str | None
+    tahmini_fiyat: int
+    birim_m2_fiyat: int
+    fiyat_alt: int
+    fiyat_ust: int
+    beklenen_fiyat: int | None
+    yorum_durum: str | None
+    olusturulma_tarihi: datetime
+
+    model_config = ConfigDict(from_attributes=True)
