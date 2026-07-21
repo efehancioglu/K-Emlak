@@ -63,6 +63,15 @@ class IlanDegerlendirme(BaseModel):
     fark_yuzdesi: float  # ilan fiyatinin tahmine gore yuzde farki (+ pahali)
 
 
+class PiyasaOzet(BaseModel):
+    """Ilan liste kartindaki hafif piyasa onizlemesi: tiklamadan once ilanin
+    piyasaya gore durumunu (uygun/normal/pahali) gostermek icin."""
+
+    durum: str          # "uygun" | "normal" | "pahali"
+    tahmini_fiyat: int
+    fark_yuzdesi: float  # ilan fiyatinin tahmine gore yuzde farki (+ pahali)
+
+
 class ValuationRead(BaseModel):
     """Kayit altina alinmis bir gecmis degerleme."""
 
