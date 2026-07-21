@@ -275,6 +275,81 @@ h2 { font-size: 1.3rem; font-weight: 750; }
   .two-col { grid-template-columns: 1fr; }
 }
 
+/* ---- Filtre cubugu ---- */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+.filters .field { gap: 5px; }
+.filters .apply { grid-column: auto; }
+.filters .apply .btn { width: 100%; }
+
+/* ---- Ilan liste ---- */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.listing-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+}
+.listing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+}
+.listing-card .konum { font-size: 0.85rem; color: var(--ink-soft); font-weight: 600; }
+.listing-card .fiyat {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 12px;
+}
+.listing-card .ozet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.chip {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.list-info { margin-bottom: 14px; font-size: 0.9rem; color: var(--ink-faint); }
+
+/* ---- Ilan detay ---- */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.detail-row .k { color: var(--ink-soft); }
+.detail-row .v { font-weight: 650; text-align: right; }
+@media (max-width: 620px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
 /* ---- Yardimci ---- */
 .muted { color: var(--ink-soft); }
 .stack { display: flex; flex-direction: column; gap: 16px; }
