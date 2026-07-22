@@ -428,6 +428,88 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 .chart-card .alt { font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 16px; }
 .chart-wrap { width: 100%; height: 340px; }
 
+/* Genis filtre izgarasi (Ilanlar): daha dar sutunlar, cok alan sigsin */
+.filters-genis {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+/* Liste ustu: sonuc bilgisi solda, siralama sagda */
+.liste-baslik {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.liste-baslik .list-info { margin-bottom: 0; }
+.field.sirala { min-width: 180px; }
+.field.sirala label { text-align: right; }
+
+/* ---- Degerleme gecmisi ---- */
+.gecmis-liste { display: flex; flex-direction: column; gap: 12px; }
+.gecmis-kart {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+}
+.gecmis-kart.durum-uygun { border-left-color: var(--uygun); }
+.gecmis-kart.durum-normal { border-left-color: var(--normal); }
+.gecmis-kart.durum-pahali { border-left-color: var(--pahali); }
+.gecmis-ust {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gecmis-ust .konum { font-size: 0.9rem; font-weight: 600; color: var(--ink-soft); }
+.gecmis-tarih { font-size: 0.8rem; color: var(--ink-faint); }
+.gecmis-orta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0 10px;
+}
+.gecmis-tahmin { display: flex; flex-direction: column; gap: 1px; }
+.gecmis-tahmin .etiket { font-size: 0.74rem; color: var(--ink-faint); }
+.gecmis-tahmin .deger { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+.gecmis-tahmin .aralik { font-size: 0.8rem; color: var(--ink-soft); }
+.gecmis-orta .piyasa-rozet { position: static; }
+.gecmis-ozet { display: flex; flex-wrap: wrap; gap: 6px 8px; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* ---- Yonetim: veri cekme eylemi ---- */
+.yonetim-eylem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+.yonetim-eylem strong { font-size: 1rem; }
+.yonetim-eylem .alt { font-size: 0.85rem; color: var(--ink-soft); margin-top: 2px; }
+
+/* Basari mesaji (form-error'in yesil esdegeri) */
+.form-ok {
+  color: var(--uygun);
+  background: var(--uygun-bg);
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
 /* ---- Yardimci ---- */
 .muted { color: var(--ink-soft); }
 .stack { display: flex; flex-direction: column; gap: 16px; }

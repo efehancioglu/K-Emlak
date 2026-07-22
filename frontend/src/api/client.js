@@ -29,8 +29,11 @@ export const api = {
   degerlemeSecenekleri: () => api.get("/valuation/options"),
   degerlemeGecmisi: (params = "") => api.get("/valuation/history" + params),
   ilanlar: (params = "") => api.get("/listings/" + params),
+  ilanFiltreSecenekleri: () => api.get("/listings/filtre-secenekleri"),
   ilanDetay: (id) => api.get("/listings/" + id),
   ozetIstatistik: () => api.get("/stats/summary"),
   ilceIstatistik: () => api.get("/stats/by-ilce"),
   fiyatTrendi: () => api.get("/stats/price-trend"),
+  // Veriyi simdi cek: scraping + DB aktarimini arkaplanda baslatir.
+  veriCek: () => api.post("/scraper/run"),
 };
