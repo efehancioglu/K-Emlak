@@ -44,11 +44,16 @@ def aidat_cevir(deger: str) -> int | None:
     return sayiya_cevir(temiz)
 
 
+def tam_sayi(deger: str) -> int:
+    # "120" -> 120 ; "1.0" -> 1 (scrape bazen ondalikli string veriyor)
+    return int(float(deger.strip()))
+
+
 def int_veya_varsayilan(deger: str, varsayilan: int) -> int:
     temiz = deger.strip()
     if not temiz:
         return varsayilan
-    return int(temiz)
+    return tam_sayi(temiz)
 
 
 def str_veya_varsayilan(deger: str, varsayilan: str) -> str:
@@ -108,8 +113,8 @@ def satiri_temizle(satir: dict) -> dict | None:
             "ilce": satir["ilce"].strip(),
             "mahalle": satir["mahalle"].strip() or None,
             "fiyat": sayiya_cevir(satir["fiyat"]),
-            "brut_metrekare": int(satir["brut_m2"]),
-            "net_metrekare": int(satir["net_m2"]),
+            "brut_metrekare": tam_sayi(satir["brut_m2"]),
+            "net_metrekare": tam_sayi(satir["net_m2"]),
             "oda_sayisi": satir["oda_sayisi"].strip(),
             "banyo_sayisi": int_veya_varsayilan(satir["banyo_sayisi"], 1),
             "kat_sayisi": ilk_sayi(satir["kat_sayisi"], varsayilan=1),
