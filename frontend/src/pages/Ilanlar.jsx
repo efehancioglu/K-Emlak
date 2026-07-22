@@ -4,7 +4,21 @@ import PageHead from "../components/PageHead";
 import { api } from "../api/client";
 import { tl, sayi } from "../utils/format";
 
-const BOS_FILTRE = { ilce: "", oda_sayisi: "", min_fiyat: "", max_fiyat: "" };
+const BOS_FILTRE = {
+  ilce: "",
+  mahalle: "",
+  oda_sayisi: "",
+  min_fiyat: "",
+  max_fiyat: "",
+  min_m2: "",
+  max_m2: "",
+  min_banyo: "",
+  max_bina_yasi: "",
+  isitma_tipi: "",
+  kullanim_durumu: "",
+  esyali: "",
+  cephe: "",
+};
 const SAYFA_BOYUTU = 24;
 
 // Piyasa durumu -> kart uzerindeki onizleme rozeti (simge + etiket + renk sinifi)
@@ -14,19 +28,22 @@ const PIYASA = {
   pahali: { simge: "▲", etiket: "Piyasa üstü" },
 };
 
-function sorgu(filtre, skip) {
+function sorgu(filtre, sirala, skip) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(filtre)) {
     if (v !== "" && v != null) p.set(k, v);
   }
+  if (sirala) p.set("sirala", sirala);
   p.set("skip", skip);
   p.set("limit", SAYFA_BOYUTU);
   return "?" + p.toString();
 }
 
 export default function Ilanlar() {
-  const [secenekler, setSecenekler] = useState(null);
+  const [secenekler, setSecenekler] = useState(null); // degerleme secenekleri (ilce/mahalle/oda)
+  const [filtreSec, setFiltreSec] = useState(null); // ilan filtre secenekleri (isitma/kullanim/cephe/sirala)
   const [filtre, setFiltre] = useState(BOS_FILTRE);
+  const [sirala, setSirala] = useState("en_yeni");
   const [ilanlar, setIlanlar] = useState([]);
   const [toplam, setToplam] = useState(0);
   const [skip, setSkip] = useState(0);
@@ -35,14 +52,15 @@ export default function Ilanlar() {
 
   useEffect(() => {
     api.degerlemeSecenekleri().then(setSecenekler).catch(() => {});
-    yukle(BOS_FILTRE, 0);
+    api.ilanFiltreSecenekleri().then(setFiltreSec).catch(() => {});
+    yukle(BOS_FILTRE, "en_yeni", 0);
   }, []);
 
-  const yukle = async (f, yeniSkip) => {
+  const yukle = async (f, s, yeniSkip) => {
     setYukleniyor(true);
     setHata("");
     try {
-      const veri = await api.ilanlar(sorgu(f, yeniSkip));
+      const veri = await api.ilanlar(sorgu(f, s, yeniSkip));
       setIlanlar(veri.items);
       setToplam(veri.toplam);
       setSkip(veri.skip);
@@ -57,15 +75,31 @@ export default function Ilanlar() {
   const guncelle = (alan) => (e) =>
     setFiltre((o) => ({ ...o, [alan]: e.target.value }));
 
+  // Ilce degisince o ilceye ait olmayan mahalle secimini sifirla.
+  const ilceGuncelle = (e) =>
+    setFiltre((o) => ({ ...o, ilce: e.target.value, mahalle: "" }));
+
+  const siralaGuncelle = (e) => {
+    const s = e.target.value;
+    setSirala(s);
+    yukle(filtre, s, 0); // siralama degisince ilk sayfadan yeniden yukle
+  };
+
   const filtrele = (e) => {
     e.preventDefault();
-    yukle(filtre, 0); // filtre degisince ilk sayfaya don
+    yukle(filtre, sirala, 0); // filtre degisince ilk sayfaya don
   };
 
   const temizle = () => {
     setFiltre(BOS_FILTRE);
-    yukle(BOS_FILTRE, 0);
+    setSirala("en_yeni");
+    yukle(BOS_FILTRE, "en_yeni", 0);
   };
+
+  const mahalleler =
+    (secenekler?.mahalle_by_ilce && filtre.ilce
+      ? secenekler.mahalle_by_ilce[filtre.ilce]
+      : null) || [];
 
   const sayfa = Math.floor(skip / SAYFA_BOYUTU) + 1;
   const toplamSayfa = Math.max(1, Math.ceil(toplam / SAYFA_BOYUTU));
@@ -77,15 +111,30 @@ export default function Ilanlar() {
       <PageHead
         eyebrow="İlanlar"
         baslik="İstanbul konut ilanları"
-        aciklama="İlçe, fiyat ve oda sayısına göre filtrele. Her kartta, ilanın piyasaya göre durumu daha tıklamadan önizlenir."
+        aciklama="Konum, fiyat, metrekare, oda, ısınma ve daha fazlasına göre filtrele; sonuçları fiyata veya tarihe göre sırala. Her kartta ilanın piyasaya göre durumu daha tıklamadan önizlenir."
       />
 
-      <form className="filters" onSubmit={filtrele}>
+      <form className="filters filters-genis" onSubmit={filtrele}>
         <div className="field">
           <label>İlçe</label>
-          <select value={filtre.ilce} onChange={guncelle("ilce")}>
+          <select value={filtre.ilce} onChange={ilceGuncelle}>
             <option value="">Tümü</option>
             {secenekler?.ilce.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>Mahalle</label>
+          <select
+            value={filtre.mahalle}
+            onChange={guncelle("mahalle")}
+            disabled={!filtre.ilce}
+          >
+            <option value="">Tümü</option>
+            {mahalleler.map((v) => (
               <option key={v} value={v}>
                 {v}
               </option>
@@ -99,6 +148,50 @@ export default function Ilanlar() {
             {secenekler?.oda_sayisi.map((v) => (
               <option key={v} value={v}>
                 {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>Isınma</label>
+          <select value={filtre.isitma_tipi} onChange={guncelle("isitma_tipi")}>
+            <option value="">Tümü</option>
+            {filtreSec?.isitma_tipi.map((o) => (
+              <option key={o.deger} value={o.deger}>
+                {o.etiket}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>Kullanım durumu</label>
+          <select
+            value={filtre.kullanim_durumu}
+            onChange={guncelle("kullanim_durumu")}
+          >
+            <option value="">Tümü</option>
+            {filtreSec?.kullanim_durumu.map((o) => (
+              <option key={o.deger} value={o.deger}>
+                {o.etiket}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>Eşya durumu</label>
+          <select value={filtre.esyali} onChange={guncelle("esyali")}>
+            <option value="">Tümü</option>
+            <option value="true">Eşyalı</option>
+            <option value="false">Eşyasız</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Cephe</label>
+          <select value={filtre.cephe} onChange={guncelle("cephe")}>
+            <option value="">Farketmez</option>
+            {filtreSec?.cephe.map((o) => (
+              <option key={o.deger} value={o.deger}>
+                {o.etiket}
               </option>
             ))}
           </select>
@@ -121,6 +214,46 @@ export default function Ilanlar() {
             value={filtre.max_fiyat}
             onChange={guncelle("max_fiyat")}
             placeholder="₺"
+          />
+        </div>
+        <div className="field">
+          <label>Min. m²</label>
+          <input
+            type="number"
+            min="0"
+            value={filtre.min_m2}
+            onChange={guncelle("min_m2")}
+            placeholder="m²"
+          />
+        </div>
+        <div className="field">
+          <label>Maks. m²</label>
+          <input
+            type="number"
+            min="0"
+            value={filtre.max_m2}
+            onChange={guncelle("max_m2")}
+            placeholder="m²"
+          />
+        </div>
+        <div className="field">
+          <label>Min. banyo</label>
+          <input
+            type="number"
+            min="0"
+            value={filtre.min_banyo}
+            onChange={guncelle("min_banyo")}
+            placeholder="adet"
+          />
+        </div>
+        <div className="field">
+          <label>Maks. bina yaşı</label>
+          <input
+            type="number"
+            min="0"
+            value={filtre.max_bina_yasi}
+            onChange={guncelle("max_bina_yasi")}
+            placeholder="yaş"
           />
         </div>
         <div className="field apply">
@@ -147,12 +280,26 @@ export default function Ilanlar() {
         </div>
       ) : (
         <>
-          <div className="list-info">
-            <strong>{sayi(toplam)}</strong> ilandan{" "}
-            <strong>
-              {ilk}–{son}
-            </strong>{" "}
-            arası gösteriliyor
+          <div className="liste-baslik">
+            <div className="list-info">
+              <strong>{sayi(toplam)}</strong> ilandan{" "}
+              <strong>
+                {ilk}–{son}
+              </strong>{" "}
+              arası gösteriliyor
+            </div>
+            <div className="field sirala">
+              <label>Sırala</label>
+              <select value={sirala} onChange={siralaGuncelle}>
+                {(filtreSec?.sirala || [{ deger: "en_yeni", etiket: "En yeni" }]).map(
+                  (o) => (
+                    <option key={o.deger} value={o.deger}>
+                      {o.etiket}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
           </div>
 
           <div className="listing-grid">
@@ -196,7 +343,7 @@ export default function Ilanlar() {
             <button
               className="btn btn-ghost"
               disabled={skip === 0}
-              onClick={() => yukle(filtre, Math.max(0, skip - SAYFA_BOYUTU))}
+              onClick={() => yukle(filtre, sirala, Math.max(0, skip - SAYFA_BOYUTU))}
             >
               ‹ Önceki
             </button>
@@ -206,7 +353,7 @@ export default function Ilanlar() {
             <button
               className="btn btn-ghost"
               disabled={sayfa >= toplamSayfa}
-              onClick={() => yukle(filtre, skip + SAYFA_BOYUTU)}
+              onClick={() => yukle(filtre, sirala, skip + SAYFA_BOYUTU)}
             >
               Sonraki ›
             </button>

@@ -24,6 +24,26 @@ export default function Yonetim() {
   const [trend, setTrend] = useState([]);
   const [hata, setHata] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [cekiliyor, setCekiliyor] = useState(false);
+  const [cekmeMesaj, setCekmeMesaj] = useState(null); // {tip: "ok"|"err", metin}
+
+  const veriCek = async () => {
+    setCekiliyor(true);
+    setCekmeMesaj(null);
+    try {
+      await api.veriCek();
+      setCekmeMesaj({
+        tip: "ok",
+        metin:
+          "Veri çekme arka planda başlatıldı. İşlem birkaç dakika sürebilir; " +
+          "tamamlanınca sayfayı yenileyerek güncel istatistikleri görebilirsin.",
+      });
+    } catch (e) {
+      setCekmeMesaj({ tip: "err", metin: "Başlatılamadı: " + e.message });
+    } finally {
+      setCekiliyor(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -52,6 +72,28 @@ export default function Yonetim() {
         baslik="Genel bakış"
         aciklama="Sistemdeki İstanbul ilanlarının özeti: toplam ilan, ilçelere göre ortalama metrekare fiyatı ve zaman içindeki fiyat değişimi."
       />
+
+      <div className="yonetim-eylem">
+        <div>
+          <strong>Veri toplama</strong>
+          <div className="alt">
+            Hepsiemlak'tan güncel İstanbul ilanlarını çeker ve veritabanına
+            işler.
+          </div>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={veriCek}
+          disabled={cekiliyor}
+        >
+          {cekiliyor ? "Başlatılıyor…" : "Verileri şimdi çek"}
+        </button>
+      </div>
+      {cekmeMesaj && (
+        <p className={cekmeMesaj.tip === "ok" ? "form-ok" : "form-error"}>
+          {cekmeMesaj.metin}
+        </p>
+      )}
 
       {hata && <p className="form-error">{hata}</p>}
       {yukleniyor ? (
