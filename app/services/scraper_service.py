@@ -136,3 +136,30 @@ class _ScraperYoneticisi:
 
 
 yonetici = _ScraperYoneticisi()
+
+
+def scraping_ve_aktarim_calistir() -> dict:
+    """Zamanlanmis (gecelik) otomatik cekme icin: scraper'i sonuna kadar
+    calistirir, ardindan verileri DB'ye aktarir. Interaktif yonetici'nin
+    (durdurma/canli sayac) aksine bu bloklar ve mudahalesiz calisir; APScheduler
+    zaten kendi arka plan thread'inde cagirir."""
+    sonuc = {"scraper_basarili": False, "ingestion_calisti": False, "hata": None}
+
+    try:
+        subprocess.run(
+            [settings.scraper_python_path, settings.scraper_script_path],
+            cwd=settings.scraper_working_dir,
+            check=True,
+        )
+        sonuc["scraper_basarili"] = True
+    except subprocess.CalledProcessError as hata:
+        sonuc["hata"] = f"Scraper calisirken hata: {hata}"
+        print(sonuc["hata"])
+        return sonuc
+
+    try:
+        verileri_ice_aktar()
+        sonuc["ingestion_calisti"] = True
+    except Exception as hata:  # noqa: BLE001
+        sonuc["hata"] = f"Ingestion calisirken hata: {hata}"
+    return sonuc
