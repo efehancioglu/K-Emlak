@@ -500,6 +500,40 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 .yonetim-eylem strong { font-size: 1rem; }
 .yonetim-eylem .alt { font-size: 0.85rem; color: var(--ink-soft); margin-top: 2px; }
 
+/* Canli veri-cekme bilgi kutusu */
+.scraper-kutu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--surface-2);
+}
+.scraper-kutu.calisiyor { border-left-color: var(--brand); background: var(--brand-soft); }
+.scraper-kutu.bitti { border-left-color: var(--uygun); background: var(--uygun-bg); }
+.scraper-kutu.err { border-left-color: var(--pahali); background: var(--pahali-bg); }
+.scraper-baslik { font-weight: 700; font-size: 0.95rem; }
+.scraper-kutu .alt { font-size: 0.86rem; color: var(--ink-soft); margin-top: 2px; }
+.scraper-kutu .alt strong { color: var(--ink); }
+/* Nabiz atan canli gostergesi */
+.scraper-kutu .nabiz {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--brand);
+  box-shadow: 0 0 0 0 rgba(214, 40, 40, 0.5);
+  animation: nabiz 1.4s infinite;
+}
+@keyframes nabiz {
+  0% { box-shadow: 0 0 0 0 rgba(214, 40, 40, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(214, 40, 40, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(214, 40, 40, 0); }
+}
+
 /* Basari mesaji (form-error'in yesil esdegeri) */
 .form-ok {
   color: var(--uygun);

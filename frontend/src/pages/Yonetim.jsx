@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -18,47 +18,99 @@ const RENK = "#d62828"; // marka kirmizisi (grafik ana rengi)
 const IZGARA = "#e6e2d9";
 const EKSEN = "#8a938e";
 
+const BOS_SCRAPER = { durum: "bosta", yeni_ilan: 0, ingest_ozeti: null, hata: null };
+
 export default function Yonetim() {
   const [ozet, setOzet] = useState(null);
   const [ilceler, setIlceler] = useState([]);
   const [trend, setTrend] = useState([]);
   const [hata, setHata] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
-  const [cekiliyor, setCekiliyor] = useState(false);
-  const [cekmeMesaj, setCekmeMesaj] = useState(null); // {tip: "ok"|"err", metin}
+  const [scraper, setScraper] = useState(BOS_SCRAPER); // /scraper/status yaniti
+  const [eylemHata, setEylemHata] = useState(null); // baslat/durdur hatasi
+  const pollRef = useRef(null);
 
-  const veriCek = async () => {
-    setCekiliyor(true);
-    setCekmeMesaj(null);
-    try {
-      await api.veriCek();
-      setCekmeMesaj({
-        tip: "ok",
-        metin:
-          "Veri çekme arka planda başlatıldı. İşlem birkaç dakika sürebilir; " +
-          "tamamlanınca sayfayı yenileyerek güncel istatistikleri görebilirsin.",
-      });
-    } catch (e) {
-      setCekmeMesaj({ tip: "err", metin: "Başlatılamadı: " + e.message });
-    } finally {
-      setCekiliyor(false);
-    }
-  };
+  const cekiliyor = scraper.durum === "cekiliyor";
+  const kaydediliyor = scraper.durum === "kaydediliyor";
+  const aktif = cekiliyor || kaydediliyor;
 
-  useEffect(() => {
-    Promise.all([
-      api.ozetIstatistik(),
-      api.ilceIstatistik(),
-      api.fiyatTrendi(),
-    ])
+  const istatistikleriYukle = () => {
+    setYukleniyor(true);
+    Promise.all([api.ozetIstatistik(), api.ilceIstatistik(), api.fiyatTrendi()])
       .then(([o, il, tr]) => {
         setOzet(o);
         setIlceler(il);
         setTrend(tr);
+        setHata("");
       })
       .catch((e) => setHata("Veriler yüklenemedi: " + e.message))
       .finally(() => setYukleniyor(false));
+  };
+
+  const durumCek = async () => {
+    try {
+      const d = await api.veriDurum();
+      setScraper(d);
+      return d;
+    } catch {
+      return null;
+    }
+  };
+
+  const pollDurdur = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  const pollBaslat = () => {
+    if (pollRef.current) return;
+    pollRef.current = setInterval(async () => {
+      const d = await durumCek();
+      // Is bittiyse (bitti/durduruldu/hata/bosta) poll'u durdur, istatistikleri tazele
+      if (d && d.durum !== "cekiliyor" && d.durum !== "kaydediliyor") {
+        pollDurdur();
+        istatistikleriYukle();
+      }
+    }, 2000);
+  };
+
+  useEffect(() => {
+    istatistikleriYukle();
+    // Sayfa acildiginda devam eden bir cekme var mi kontrol et
+    durumCek().then((d) => {
+      if (d && (d.durum === "cekiliyor" || d.durum === "kaydediliyor")) {
+        pollBaslat();
+      }
+    });
+    return () => pollDurdur();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const veriCek = async () => {
+    setEylemHata(null);
+    try {
+      const r = await api.veriCek();
+      if (r && r.baslatildi === false) {
+        setEylemHata(r.mesaj || "Zaten çalışıyor.");
+      }
+      await durumCek();
+      pollBaslat();
+    } catch (e) {
+      setEylemHata("Başlatılamadı: " + e.message);
+    }
+  };
+
+  const veriDurdur = async () => {
+    setEylemHata(null);
+    try {
+      await api.veriDurdur();
+      await durumCek(); // "kaydediliyor" asamasina gecer
+    } catch (e) {
+      setEylemHata("Durdurulamadı: " + e.message);
+    }
+  };
 
   // m2 fiyatina gore en pahali 12 ilce (grafik icin anlamli siralama)
   const enPahaliIlceler = [...ilceler]
@@ -77,23 +129,28 @@ export default function Yonetim() {
         <div>
           <strong>Veri toplama</strong>
           <div className="alt">
-            Hepsiemlak'tan güncel İstanbul ilanlarını çeker ve veritabanına
-            işler.
+            Hepsiemlak'tan güncel İstanbul ilanlarını çeker. İstediğin an
+            durdurabilirsin; o ana kadar çekilenler veritabanına kaydedilir.
           </div>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={veriCek}
-          disabled={cekiliyor}
-        >
-          {cekiliyor ? "Başlatılıyor…" : "Verileri şimdi çek"}
-        </button>
+        <div className="row" style={{ gap: 8 }}>
+          <button className="btn btn-primary" onClick={veriCek} disabled={aktif}>
+            {cekiliyor
+              ? "Çekiliyor…"
+              : kaydediliyor
+              ? "Kaydediliyor…"
+              : "Verileri şimdi çek"}
+          </button>
+          {cekiliyor && (
+            <button className="btn btn-ghost" onClick={veriDurdur}>
+              Durdur
+            </button>
+          )}
+        </div>
       </div>
-      {cekmeMesaj && (
-        <p className={cekmeMesaj.tip === "ok" ? "form-ok" : "form-error"}>
-          {cekmeMesaj.metin}
-        </p>
-      )}
+
+      {eylemHata && <p className="form-error">{eylemHata}</p>}
+      <ScraperKutu s={scraper} />
 
       {hata && <p className="form-error">{hata}</p>}
       {yukleniyor ? (
@@ -193,6 +250,67 @@ function StatCard({ k, v, alt }) {
       <div className="k">{k}</div>
       <div className="v">{v}</div>
       {alt && <div className="alt">{alt}</div>}
+    </div>
+  );
+}
+
+// Veri cekme durumunu canli gosteren bilgi kutusu.
+function ScraperKutu({ s }) {
+  if (s.durum === "bosta") return null;
+
+  if (s.durum === "hata") {
+    return (
+      <div className="scraper-kutu err">
+        <strong>Bir hata oluştu.</strong>
+        <div className="alt">{s.hata}</div>
+      </div>
+    );
+  }
+
+  if (s.durum === "cekiliyor") {
+    return (
+      <div className="scraper-kutu calisiyor">
+        <span className="nabiz" />
+        <div className="scraper-metin">
+          <div className="scraper-baslik">Veri çekiliyor…</div>
+          <div className="alt">
+            Şu ana kadar <strong>{sayi(s.yeni_ilan)}</strong> yeni ilan bulundu.
+            Yeterince topladığını düşününce “Durdur”a basabilirsin.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (s.durum === "kaydediliyor") {
+    return (
+      <div className="scraper-kutu calisiyor">
+        <span className="nabiz" />
+        <div className="scraper-metin">
+          <div className="scraper-baslik">Veritabanına kaydediliyor…</div>
+          <div className="alt">
+            Çekme durdu; bu koşuda bulunan <strong>{sayi(s.yeni_ilan)}</strong>{" "}
+            ilan veritabanına işleniyor.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // bitti | durduruldu
+  const oz = s.ingest_ozeti || {};
+  return (
+    <div className="scraper-kutu bitti">
+      <div className="scraper-metin">
+        <div className="scraper-baslik">
+          {s.durum === "durduruldu" ? "Durduruldu ✓" : "Tamamlandı ✓"}
+        </div>
+        <div className="alt">
+          Bu koşuda <strong>{sayi(s.yeni_ilan)}</strong> ilan çekildi.
+          Veritabanına <strong>{sayi(oz.eklenen || 0)}</strong> yeni ilan
+          eklendi{oz.zaten_var ? `, ${sayi(oz.zaten_var)} tanesi zaten kayıtlıydı` : ""}.
+        </div>
+      </div>
     </div>
   );
 }

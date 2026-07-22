@@ -128,10 +128,13 @@ def satiri_temizle(satir: dict) -> dict | None:
         return None
 
 
-def calistir() -> None:
+def calistir() -> dict:
+    """CSV'deki ilanlari (yalnizca Istanbul, henuz kayitli olmayanlar) DB'ye
+    aktarir. Ozet sayilari bir sozluk olarak dondurur (scraper yoneticisi
+    ekranda 'kac ilan kaydedildi' gostersin diye)."""
     if not CSV_PATH.exists():
         print(f"CSV bulunamadı: {CSV_PATH}")
-        return
+        return {"eklenen": 0, "zaten_var": 0, "atlanan": 0, "istanbul_disi": 0}
 
     db = SessionLocal()
     eklenen = zaten_var = atlanan = istanbul_disi = 0
@@ -166,6 +169,12 @@ def calistir() -> None:
         f"Eklenen: {eklenen}, zaten vardı: {zaten_var}, "
         f"atlanan (hatalı): {atlanan}, İstanbul dışı: {istanbul_disi}"
     )
+    return {
+        "eklenen": eklenen,
+        "zaten_var": zaten_var,
+        "atlanan": atlanan,
+        "istanbul_disi": istanbul_disi,
+    }
 
 
 if __name__ == "__main__":
