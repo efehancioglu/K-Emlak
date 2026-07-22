@@ -34,6 +34,8 @@ export const api = {
   ozetIstatistik: () => api.get("/stats/summary"),
   ilceIstatistik: () => api.get("/stats/by-ilce"),
   fiyatTrendi: () => api.get("/stats/price-trend"),
-  // Veriyi simdi cek: scraping + DB aktarimini arkaplanda baslatir.
+  // Veri cekme kontrolu: baslat / durdur (o ana dek cekileni DB'ye kaydeder) / durum
   veriCek: () => api.post("/scraper/run"),
+  veriDurdur: () => api.post("/scraper/stop"),
+  veriDurum: () => api.get("/scraper/status"),
 };
