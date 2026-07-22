@@ -27,11 +27,14 @@ _CEPHE_YONLERI = [
     ("cephe_bati", "Batı"),
 ]
 
-# Modelin ortalama sapmasini temsil eden hata payi. Tahmini bir alt-ust
-# araligi ("su fiyatla su fiyat arasinda") uretmek ve kullaniciya tahminin
-# ne kadar isabetli olabilecegini gostermek icin kullanilir. Model yeniden
-# egitilip gercek MAPE olctuldukce buradan guncellenebilir.
-TAHMIN_HATA_PAYI = 0.12
+# Modelin tipik sapmasini temsil eden hata payi; tahmini bir alt-ust araligi
+# uretmek ve kullaniciya isabet hissi vermek icin kullanilir.
+# scripts/mape_olc.py ile tutulan test setinde OLCULMUS deger: medyan APE
+# ~%16 (ilanlarin yarisi bu bandin icinde). Not: ortalama MAPE ~%51 cikiyor
+# ama birkac uc/hatali ilan onu sisirdigi icin band olarak medyan kullaniyoruz.
+# Veri her guncellenip model yeniden egitildiginde mape_olc tekrar calistirilip
+# bu deger guncellenmeli.
+TAHMIN_HATA_PAYI = 0.16
 
 # Beklenen fiyatin tahminden ne kadar sapinca "pahali"/"uygun" sayilacagi.
 YORUM_ESIGI = 0.10
