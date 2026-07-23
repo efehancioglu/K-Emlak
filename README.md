@@ -26,14 +26,35 @@ Aşağıdaki komutlar **Windows PowerShell** içindir. Sırasıyla: veritabanı 
 
 ### 1) Veritabanı (Docker ile — en kolay yol)
 
+**Docker'ı hiç kullanmadıysanız:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+kurup çalıştırın (Windows). Sonra proje kökünde:
+
 ```powershell
-docker compose up -d
+# DB'yi başlat ve bağlantı kabul edene kadar bekle
+docker compose up -d --wait
+
+# Durumu gör (STATUS "healthy" olmalı)
+docker compose ps
 ```
 
 Bu, `localhost:5432` üzerinde `kemlak_db` adında bir PostgreSQL başlatır
-(kullanıcı: `kemlak`, şifre: `kemlak_sifre`). Docker kullanmak istemezseniz kendi
-PostgreSQL'inizi (veya Neon gibi bir bulut DB'yi) kullanıp `.env` içindeki
-`DATABASE_URL`'i ona göre ayarlayın.
+(kullanıcı: `kemlak`, şifre: `kemlak_sifre`). Bu değerler `.env.example`'daki
+`DATABASE_URL` ile birebir uyumludur; başka bir şey ayarlamanız gerekmez.
+
+Sık kullanılan komutlar:
+
+```powershell
+docker compose stop     # DB'yi durdur (veri korunur)
+docker compose start    # tekrar başlat
+docker compose down     # kaldır (veri "pgdata" biriminde saklı kalır)
+docker compose down -v  # kaldır ve TÜM veriyi sil
+```
+
+> **Docker yerine Neon/kendi PostgreSQL'iniz:** Docker kullanmak istemezseniz kendi
+> PostgreSQL'inizi ya da Neon gibi bir bulut DB'yi kullanabilirsiniz — tek yapmanız
+> gereken `.env` içindeki `DATABASE_URL`'i o bağlantıyla değiştirmek. **Gerçek
+> bağlantı diziniz (özellikle şifre içeren Neon string'i) yalnızca yerel `.env`'de
+> kalmalı; asla repoya / README'ye yazılmamalıdır.** (`.env` zaten git'e dahil değildir.)
 
 ### 2) Backend (FastAPI)
 

@@ -1,7 +1,8 @@
 services:
   db:
     image: postgres:16
-    restart: always
+    container_name: kemlak_db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: kemlak
       POSTGRES_PASSWORD: kemlak_sifre
@@ -10,5 +11,13 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # DB gercekten baglanti kabul edene kadar "healthy" olmaz; boylece
+    # "docker compose up -d --wait" ile bekleyip sonra alembic calistirilabilir.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kemlak -d kemlak_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   pgdata:
