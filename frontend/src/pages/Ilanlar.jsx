@@ -28,12 +28,21 @@ const PIYASA = {
   pahali: { simge: "▲", etiket: "Piyasa üstü" },
 };
 
-function sorgu(filtre, sirala, skip) {
+// Piyasa durumu filtresi secenekleri (siralamanin yaninda)
+const PIYASA_FILTRE = [
+  { deger: "", etiket: "Tümü" },
+  { deger: "uygun", etiket: "Piyasa altı" },
+  { deger: "normal", etiket: "Piyasa değerinde" },
+  { deger: "pahali", etiket: "Piyasa üstü" },
+];
+
+function sorgu(filtre, sirala, piyasa, skip) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(filtre)) {
     if (v !== "" && v != null) p.set(k, v);
   }
   if (sirala) p.set("sirala", sirala);
+  if (piyasa) p.set("piyasa", piyasa);
   p.set("skip", skip);
   p.set("limit", SAYFA_BOYUTU);
   return "?" + p.toString();
@@ -44,6 +53,7 @@ export default function Ilanlar() {
   const [filtreSec, setFiltreSec] = useState(null); // ilan filtre secenekleri (isitma/kullanim/cephe/sirala)
   const [filtre, setFiltre] = useState(BOS_FILTRE);
   const [sirala, setSirala] = useState("en_yeni");
+  const [piyasa, setPiyasa] = useState(""); // piyasa durumu filtresi (uygun/normal/pahali)
   const [ilanlar, setIlanlar] = useState([]);
   const [toplam, setToplam] = useState(0);
   const [skip, setSkip] = useState(0);
@@ -53,14 +63,14 @@ export default function Ilanlar() {
   useEffect(() => {
     api.degerlemeSecenekleri().then(setSecenekler).catch(() => {});
     api.ilanFiltreSecenekleri().then(setFiltreSec).catch(() => {});
-    yukle(BOS_FILTRE, "en_yeni", 0);
+    yukle(BOS_FILTRE, "en_yeni", "", 0);
   }, []);
 
-  const yukle = async (f, s, yeniSkip) => {
+  const yukle = async (f, s, pi, yeniSkip) => {
     setYukleniyor(true);
     setHata("");
     try {
-      const veri = await api.ilanlar(sorgu(f, s, yeniSkip));
+      const veri = await api.ilanlar(sorgu(f, s, pi, yeniSkip));
       setIlanlar(veri.items);
       setToplam(veri.toplam);
       setSkip(veri.skip);
@@ -82,18 +92,25 @@ export default function Ilanlar() {
   const siralaGuncelle = (e) => {
     const s = e.target.value;
     setSirala(s);
-    yukle(filtre, s, 0); // siralama degisince ilk sayfadan yeniden yukle
+    yukle(filtre, s, piyasa, 0); // siralama degisince ilk sayfadan yeniden yukle
+  };
+
+  const piyasaGuncelle = (e) => {
+    const pi = e.target.value;
+    setPiyasa(pi);
+    yukle(filtre, sirala, pi, 0); // piyasa filtresi degisince ilk sayfaya don
   };
 
   const filtrele = (e) => {
     e.preventDefault();
-    yukle(filtre, sirala, 0); // filtre degisince ilk sayfaya don
+    yukle(filtre, sirala, piyasa, 0); // filtre degisince ilk sayfaya don
   };
 
   const temizle = () => {
     setFiltre(BOS_FILTRE);
     setSirala("en_yeni");
-    yukle(BOS_FILTRE, "en_yeni", 0);
+    setPiyasa("");
+    yukle(BOS_FILTRE, "en_yeni", "", 0);
   };
 
   const mahalleler =
@@ -271,6 +288,33 @@ export default function Ilanlar() {
 
       {hata && <p className="form-error">{hata}</p>}
 
+      {/* Siralama + piyasa durumu filtresi: her zaman gorunur (piyasa filtresi
+          0 sonuc dondururse kullanici filtreyi geri alabilsin) */}
+      <div className="liste-kontrol">
+        <div className="field sirala">
+          <label>Piyasa durumu</label>
+          <select value={piyasa} onChange={piyasaGuncelle}>
+            {PIYASA_FILTRE.map((o) => (
+              <option key={o.deger} value={o.deger}>
+                {o.etiket}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field sirala">
+          <label>Sırala</label>
+          <select value={sirala} onChange={siralaGuncelle}>
+            {(filtreSec?.sirala || [{ deger: "en_yeni", etiket: "En yeni" }]).map(
+              (o) => (
+                <option key={o.deger} value={o.deger}>
+                  {o.etiket}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+      </div>
+
       {yukleniyor ? (
         <p className="muted">Yükleniyor…</p>
       ) : ilanlar.length === 0 ? (
@@ -280,26 +324,12 @@ export default function Ilanlar() {
         </div>
       ) : (
         <>
-          <div className="liste-baslik">
-            <div className="list-info">
-              <strong>{sayi(toplam)}</strong> ilandan{" "}
-              <strong>
-                {ilk}–{son}
-              </strong>{" "}
-              arası gösteriliyor
-            </div>
-            <div className="field sirala">
-              <label>Sırala</label>
-              <select value={sirala} onChange={siralaGuncelle}>
-                {(filtreSec?.sirala || [{ deger: "en_yeni", etiket: "En yeni" }]).map(
-                  (o) => (
-                    <option key={o.deger} value={o.deger}>
-                      {o.etiket}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
+          <div className="list-info">
+            <strong>{sayi(toplam)}</strong> ilandan{" "}
+            <strong>
+              {ilk}–{son}
+            </strong>{" "}
+            arası gösteriliyor
           </div>
 
           <div className="listing-grid">
@@ -343,7 +373,9 @@ export default function Ilanlar() {
             <button
               className="btn btn-ghost"
               disabled={skip === 0}
-              onClick={() => yukle(filtre, sirala, Math.max(0, skip - SAYFA_BOYUTU))}
+              onClick={() =>
+                yukle(filtre, sirala, piyasa, Math.max(0, skip - SAYFA_BOYUTU))
+              }
             >
               ‹ Önceki
             </button>
@@ -353,7 +385,7 @@ export default function Ilanlar() {
             <button
               className="btn btn-ghost"
               disabled={sayfa >= toplamSayfa}
-              onClick={() => yukle(filtre, sirala, skip + SAYFA_BOYUTU)}
+              onClick={() => yukle(filtre, sirala, piyasa, skip + SAYFA_BOYUTU)}
             >
               Sonraki ›
             </button>
