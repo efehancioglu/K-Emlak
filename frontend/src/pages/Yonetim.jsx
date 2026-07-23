@@ -32,7 +32,8 @@ export default function Yonetim() {
 
   const cekiliyor = scraper.durum === "cekiliyor";
   const kaydediliyor = scraper.durum === "kaydediliyor";
-  const aktif = cekiliyor || kaydediliyor;
+  const egitiliyor = scraper.durum === "egitiliyor";
+  const aktif = cekiliyor || kaydediliyor || egitiliyor;
 
   const istatistikleriYukle = () => {
     setYukleniyor(true);
@@ -69,7 +70,12 @@ export default function Yonetim() {
     pollRef.current = setInterval(async () => {
       const d = await durumCek();
       // Is bittiyse (bitti/durduruldu/hata/bosta) poll'u durdur, istatistikleri tazele
-      if (d && d.durum !== "cekiliyor" && d.durum !== "kaydediliyor") {
+      if (
+        d &&
+        d.durum !== "cekiliyor" &&
+        d.durum !== "kaydediliyor" &&
+        d.durum !== "egitiliyor"
+      ) {
         pollDurdur();
         istatistikleriYukle();
       }
@@ -80,7 +86,12 @@ export default function Yonetim() {
     istatistikleriYukle();
     // Sayfa acildiginda devam eden bir cekme var mi kontrol et
     durumCek().then((d) => {
-      if (d && (d.durum === "cekiliyor" || d.durum === "kaydediliyor")) {
+      if (
+        d &&
+        (d.durum === "cekiliyor" ||
+          d.durum === "kaydediliyor" ||
+          d.durum === "egitiliyor")
+      ) {
         pollBaslat();
       }
     });
@@ -139,6 +150,8 @@ export default function Yonetim() {
               ? "Çekiliyor…"
               : kaydediliyor
               ? "Kaydediliyor…"
+              : egitiliyor
+              ? "Model güncelleniyor…"
               : "Verileri şimdi çek"}
           </button>
           {cekiliyor && (
@@ -297,6 +310,21 @@ function ScraperKutu({ s }) {
     );
   }
 
+  if (s.durum === "egitiliyor") {
+    return (
+      <div className="scraper-kutu calisiyor">
+        <span className="nabiz" />
+        <div className="scraper-metin">
+          <div className="scraper-baslik">Model güncelleniyor…</div>
+          <div className="alt">
+            Yeni ilanlar kaydedildi; tahmin modeli güncel veriyle yeniden
+            eğitiliyor. Birkaç saniye sürebilir.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // bitti | durduruldu
   const oz = s.ingest_ozeti || {};
   return (
@@ -309,6 +337,7 @@ function ScraperKutu({ s }) {
           Bu koşuda <strong>{sayi(s.yeni_ilan)}</strong> ilan çekildi.
           Veritabanına <strong>{sayi(oz.eklenen || 0)}</strong> yeni ilan
           eklendi{oz.zaten_var ? `, ${sayi(oz.zaten_var)} tanesi zaten kayıtlıydı` : ""}.
+          Tahmin modeli güncel veriyle yeniden eğitildi.
         </div>
       </div>
     </div>
