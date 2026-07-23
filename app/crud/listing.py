@@ -66,12 +66,16 @@ def get_listings(
     filtre: dict,
     sirala: str = "en_yeni",
     skip: int = 0,
-    limit: int = 24,
+    limit: int | None = 24,
 ) -> list[Listing]:
     query = _filtrele(select(Listing), filtre)
     # Secilen siralama + esitlikte sayfalar arasi tutarlilik icin id kirici.
     duzen = _SIRALAMA.get(sirala, _SIRALAMA["en_yeni"])
-    query = query.order_by(duzen, Listing.id).offset(skip).limit(limit)
+    query = query.order_by(duzen, Listing.id)
+    # limit=None -> tum eslesen kayitlar (piyasa durumu filtresi icin gerekli:
+    # durum DB'de olmadigindan hepsi puanlanip Python'da elenir).
+    if limit is not None:
+        query = query.offset(skip).limit(limit)
     return list(db.execute(query).scalars().all())
 
 

@@ -29,6 +29,7 @@ def list_listings(
     kullanim_durumu: KullanimDurumu | None = None,
     esyali: bool | None = None,
     cephe: str | None = Query(default=None, pattern="^(kuzey|guney|dogu|bati)$"),
+    piyasa: str | None = Query(default=None, pattern="^(uygun|normal|pahali)$"),
     sirala: str = "en_yeni",
     skip: int = 0,
     limit: int = Query(default=24, le=100),
@@ -37,7 +38,10 @@ def list_listings(
     """Filtreye uyan ilanlari secilen siraya gore sayfa sayfa dondurur. Her
     ilan icin, tiklamadan once piyasaya gore durumunu gosteren hafif bir
     onizleme (piyasa) da hesaplanir; bunun icin sayfadaki ilanlar modele
-    sokulur."""
+    sokulur.
+
+    piyasa (uygun/normal/pahali) verilirse, bu durum DB'de tutulmadigindan
+    filtreye uyan TUM ilanlar puanlanip duruma gore elenir, sonra sayfalanir."""
     filtre = {
         "ilce": ilce,
         "mahalle": mahalle,
@@ -53,6 +57,30 @@ def list_listings(
         "esyali": esyali,
         "cephe": cephe,
     }
+
+    if piyasa:
+        # Durum hesaplanan bir alan: once tum eslesen ilanlari (siralanmis)
+        # cek, hepsini puanla, istenen duruma gore ele, sonra sayfa dilimini al.
+        hepsi = listing_crud.get_listings(
+            db=db, filtre=filtre, sirala=sirala, skip=0, limit=None
+        )
+        ozetler = valuation_service.ilanlari_piyasa_ozeti(hepsi)
+        eslesen = [
+            (kayit, ozet)
+            for kayit, ozet in zip(hepsi, ozetler)
+            if ozet is not None and ozet.durum == piyasa
+        ]
+        toplam = len(eslesen)
+        dilim = eslesen[skip : skip + limit]
+        items = [
+            ListingListItem(
+                **ListingRead.model_validate(kayit).model_dump(),
+                piyasa=ozet,
+            )
+            for kayit, ozet in dilim
+        ]
+        return ListingPage(toplam=toplam, skip=skip, limit=limit, items=items)
+
     toplam = listing_crud.count_listings(db=db, filtre=filtre)
     kayitlar = listing_crud.get_listings(
         db=db,

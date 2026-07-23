@@ -444,7 +444,15 @@ h2 { font-size: 1.3rem; font-weight: 750; }
 }
 .liste-baslik .list-info { margin-bottom: 0; }
 .field.sirala { min-width: 180px; }
-.field.sirala label { text-align: right; }
+
+/* Sonuc ustu kontrol bari: siralama + piyasa durumu filtresi (saga hizali) */
+.liste-kontrol {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
 
 /* ---- Degerleme gecmisi ---- */
 .gecmis-liste { display: flex; flex-direction: column; gap: 12px; }
