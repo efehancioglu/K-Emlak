@@ -14,6 +14,8 @@ import subprocess
 import threading
 import time
 
+from k_emlak.catboost.tahmin_egit import egit
+
 from app.core.config import settings
 from scripts.ingest_listings import CSV_PATH
 from scripts.ingest_listings import calistir as verileri_ice_aktar
@@ -22,9 +24,10 @@ from scripts.ingest_listings import calistir as verileri_ice_aktar
 #   bosta        -> hic calismadi / onceki kosu bitti-sifirlandi
 #   cekiliyor    -> scraper subprocess'i calisiyor
 #   kaydediliyor -> scraper durdu, veriler DB'ye yaziliyor
-#   bitti        -> scraper kendiliginden bitti + kayit tamam
-#   durduruldu   -> kullanici durdurdu + kayit tamam
-#   hata         -> scraper baslatilamadi / kayit sirasinda hata
+#   egitiliyor   -> veriler kaydedildi, model guncel veriyle yeniden egitiliyor
+#   bitti        -> scraper kendiliginden bitti + kayit + egitim tamam
+#   durduruldu   -> kullanici durdurdu + kayit + egitim tamam
+#   hata         -> scraper baslatilamadi / kayit / egitim sirasinda hata
 
 
 class _ScraperYoneticisi:
@@ -53,7 +56,7 @@ class _ScraperYoneticisi:
             return 0
 
     def _calisiyor_mu(self) -> bool:
-        return self.durum in ("cekiliyor", "kaydediliyor")
+        return self.durum in ("cekiliyor", "kaydediliyor", "egitiliyor")
 
     # --- dis API ---
     def baslat(self) -> dict:
@@ -115,6 +118,17 @@ class _ScraperYoneticisi:
             self.hata = f"Veritabanına kaydederken hata: {hata}"
             return
 
+        # Yeni veri geldi -> model guncel veriyle yeniden egitilsin.
+        self.durum = "egitiliyor"
+        try:
+            egit(kaydet=True)
+        except Exception as hata:  # noqa: BLE001
+            # Veriler DB'ye yazildi ama model tazelenemedi; veriyi kaybetme,
+            # sadece uyar.
+            self.durum = "hata"
+            self.hata = f"Veriler kaydedildi ama model eğitilemedi: {hata}"
+            return
+
         self.durum = "durduruldu" if self._durdur_istendi else "bitti"
 
     def _sureci_sonlandir(self):
@@ -140,10 +154,15 @@ yonetici = _ScraperYoneticisi()
 
 def scraping_ve_aktarim_calistir() -> dict:
     """Zamanlanmis (gecelik) otomatik cekme icin: scraper'i sonuna kadar
-    calistirir, ardindan verileri DB'ye aktarir. Interaktif yonetici'nin
-    (durdurma/canli sayac) aksine bu bloklar ve mudahalesiz calisir; APScheduler
-    zaten kendi arka plan thread'inde cagirir."""
-    sonuc = {"scraper_basarili": False, "ingestion_calisti": False, "hata": None}
+    calistirir, verileri DB'ye aktarir ve modeli guncel veriyle yeniden egitir.
+    Interaktif yonetici'nin (durdurma/canli sayac) aksine bu bloklar ve
+    mudahalesiz calisir; APScheduler zaten kendi arka plan thread'inde cagirir."""
+    sonuc = {
+        "scraper_basarili": False,
+        "ingestion_calisti": False,
+        "egitim_calisti": False,
+        "hata": None,
+    }
 
     try:
         subprocess.run(
@@ -162,4 +181,11 @@ def scraping_ve_aktarim_calistir() -> dict:
         sonuc["ingestion_calisti"] = True
     except Exception as hata:  # noqa: BLE001
         sonuc["hata"] = f"Ingestion calisirken hata: {hata}"
+        return sonuc
+
+    try:
+        egit(kaydet=True)
+        sonuc["egitim_calisti"] = True
+    except Exception as hata:  # noqa: BLE001
+        sonuc["hata"] = f"Model egitilirken hata: {hata}"
     return sonuc
