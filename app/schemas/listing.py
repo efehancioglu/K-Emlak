@@ -1,0 +1,63 @@
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+from app.models.enums import KullanimDurumu, IsitmaTipi
+from app.schemas.valuation import IlanDegerlendirme, PiyasaOzet
+
+
+class ListingBase(BaseModel):
+    ilan_no: str
+    il: str
+    ilce: str
+    mahalle: str | None = None
+    fiyat: int
+    brut_metrekare: int
+    net_metrekare: int
+    oda_sayisi: str
+    banyo_sayisi: int
+    kat_sayisi: int
+    bulundugu_kat: str | None = None
+    bina_yasi: int
+    isitma_tipi: IsitmaTipi
+    esyali: bool
+    kullanim_durumu: KullanimDurumu
+    cephe_kuzey: bool
+    cephe_guney: bool
+    cephe_dogu: bool
+    cephe_bati: bool
+    aidat: int | None = None
+    kaynak_url: str
+
+
+class ListingCreate(ListingBase):
+    pass
+
+
+class ListingRead(ListingBase):
+    id: int
+    olusturulma_tarihi: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ListingDetail(ListingRead):
+    """Ilan detayi: ilanin bilgileri + piyasaya gore fiyat degerlendirmesi."""
+
+    fiyat_degerlendirmesi: IlanDegerlendirme
+
+
+class ListingListItem(ListingRead):
+    """Liste kartinda gosterilen ilan + hafif piyasa onizlemesi (durum/simge
+    icin). Detaydaki tam degerlendirmenin kucuk halidir."""
+
+    piyasa: PiyasaOzet | None = None
+
+
+class ListingPage(BaseModel):
+    """Sayfalanmis ilan listesi. toplam = filtreye uyan tum ilan sayisi."""
+
+    toplam: int
+    skip: int
+    limit: int
+    items: list[ListingListItem]
