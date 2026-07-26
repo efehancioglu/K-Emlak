@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, Integer, Float, Boolean, DateTime, func
+from sqlalchemy import String, Integer, BigInteger, Float, Boolean, DateTime, func
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,7 +19,8 @@ class Listing(Base):
     ilce: Mapped[str] = mapped_column(String(50), index=True)
     mahalle: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    fiyat: Mapped[int] = mapped_column(Integer, index=True)
+    # BigInteger: Istanbul'da fiyat 2,1 milyar TL'yi (int4 siniri) asabiliyor.
+    fiyat: Mapped[int] = mapped_column(BigInteger, index=True)
     brut_metrekare: Mapped[int] = mapped_column(Integer)
     net_metrekare: Mapped[int] = mapped_column(Integer)
     oda_sayisi: Mapped[str] = mapped_column(String(10))
